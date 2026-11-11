@@ -86,7 +86,21 @@ a{color:var(--brand-2);text-decoration:none}
 .nav-sep{font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;color:#6b809c;padding:15px 12px 5px;font-weight:700}
 .sidefoot{margin-top:auto;padding-top:13px;border-top:1px solid rgba(255,255,255,.09);font-size:11.5px;color:#7a8ea9}
 
-main{min-width:0;display:flex;flex-direction:column}
+main{min-width:0;display:flex;flex-direction:column;position:relative}
+
+/* ------------------------------------------------------------ progress */
+.progress{position:sticky;top:0;z-index:60;height:0;overflow:visible;pointer-events:none;
+  opacity:0;transition:opacity .2s}
+.progress.on{opacity:1}
+.progress-bar{height:4px;width:0;background:linear-gradient(90deg,var(--brand-2),var(--gold));
+  border-radius:0 3px 3px 0;transition:width .14s linear;box-shadow:0 1px 6px rgba(43,111,212,.5)}
+.progress-text{position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:8px;
+  background:rgba(21,35,56,.92);color:#fff;border-radius:999px;padding:5px 13px;font-size:12px;
+  font-weight:600;white-space:nowrap;box-shadow:0 4px 14px rgba(21,35,56,.25)}
+.progress-text b{font-variant-numeric:tabular-nums;color:#ffd79a}
+@media (max-width:760px){.progress-text{font-size:11px;padding:4px 10px;max-width:84vw;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
 .topbar{position:sticky;top:0;z-index:20;background:rgba(247,244,238,.93);backdrop-filter:blur(10px);
   border-bottom:1px solid var(--line);padding:13px 24px;display:flex;align-items:center;gap:12px}
 .topbar h1{font-size:19px}
@@ -874,6 +888,13 @@ code{background:#f1ece4;border-radius:8px;padding:3px 8px;font-size:12.5px;word-
   </aside>
 
   <main>
+    <!-- A call to Apps Script crosses the internet; nothing makes that
+         instant. This makes the wait visible instead of frozen. -->
+    <div class="progress" id="progWrap">
+      <div class="progress-bar" id="progBar"></div>
+      <div class="progress-text"><span id="progLabel">Working…</span>
+        <b id="progPct">0%</b></div>
+    </div>
     <div class="topbar">
       <div><h1 id="pgTitle">Today</h1><span class="crumb" id="pgCrumb"></span></div>
       <div class="spacer"></div>
@@ -1247,6 +1268,7 @@ code{background:#f1ece4;border-radius:8px;padding:3px 8px;font-size:12.5px;word-
                  data-i18n="wa.open">Open this chat in WhatsApp</button>
               <button class="btn ghost" onclick="skipReminder()" data-i18n="wa.skip">Skip this one</button>
               <button class="btn ghost" onclick="copyReminder()" data-i18n="wa.copy">Copy the message</button>
+              <button class="btn ghost" onclick="reminderSlip()" data-i18n="wa.slip">Slip with pay-QR</button>
             </div>
             <div class="list" id="waList" style="max-height:260px"></div>
           </div>
@@ -2066,6 +2088,7 @@ var HI = {
   'wa.done': 'अब तक भेजे',
   'wa.open': 'यह चैट WhatsApp में खोलें',
   'wa.skip': 'इसे छोड़ें',
+  'wa.slip': 'QR वाली पर्ची',
   'wa.copy': 'संदेश कॉपी करें',
   'wa.copied': 'संदेश कॉपी हो गया',
   'wa.sent': 'भेजा',
@@ -2563,6 +2586,11 @@ var HI = {
   'c.optional': 'वैकल्पिक',
   'c.back': 'वापस',
   'c.remarks': 'टिप्पणी',
+  'rep.book.tapday': 'उस दिन की हर प्रविष्टि देखने के लिए दबाएँ',
+  'rep.day.who': 'किसने जमा किया',
+  'rep.day.spent': 'पैसा किस पर खर्च हुआ',
+  'rep.day.nofee': 'इस दिन कोई फीस नहीं आई',
+  'rep.day.noexp': 'इस दिन कोई खर्च नहीं हुआ',
   'rep.entry': 'प्रविष्टि',
   'head.SCHOOL': 'स्कूल फीस',
   'head.CAB': 'गाड़ी फीस',
@@ -2897,8 +2925,11 @@ function rawApi(fn) {
 }
 function api(fn) {
   var args = [ST.token].concat([].slice.call(arguments, 1));
+  progStart(API_LABEL[fn] || T('msg.wait', 'Working…'));
   return new Promise(function (ok, no) {
-    google.script.run.withSuccessHandler(ok).withFailureHandler(function (err) {
+    google.script.run.withSuccessHandler(function (r) { progDone(); ok(r); })
+      .withFailureHandler(function (err) {
+      progDone();
       var msg = (err && err.message) || String(err);
       if (/AUTH_(EXPIRED|INVALID|REQUIRED)/.test(msg)) forceLogout(T('msg.sessionover', 'Session expired — please sign in again.'));
       no(new Error(TE(msg.replace(/^Error:\s*/, '')) || msg));
@@ -2906,6 +2937,80 @@ function api(fn) {
   });
 }
 function fail(e) { Swal.fire({ icon: 'error', title: T('msg.error', 'Error'), text: (e && e.message) || String(e) }); }
+
+/* ================================================== the progress bar
+ *
+ * Every call to Apps Script crosses the internet, and Google's own hop
+ * costs a second or two before our code even starts. Nothing can make that
+ * instant. What it can do is stop looking dead: a bar across the top that
+ * moves the whole time something is in flight, and a word saying what.
+ *
+ * It creeps towards 90% on a curve — fast at first, slower as it goes — so
+ * it is always moving without ever claiming to be finished. The jump to
+ * 100% happens when the answer actually arrives.
+ */
+var PROG = { n: 0, at: 0, timer: null, t0: 0 };
+
+/* What the bar says it is doing. A name the office would use, not the
+   function name — "Adding up the accounts", not "apiReport". */
+var API_LABEL = {
+  apiReport: 'Adding up the accounts',
+  apiBulkDues: 'Working out what each family owes',
+  apiStudentDues: 'Looking up the dues',
+  apiStudentList: 'Fetching the class list',
+  apiLists: 'Loading the lists',
+  apiDashboard: 'Loading today',
+  apiAttendanceSheet: 'Opening the roll call',
+  apiSaveAttendance: 'Saving the roll call',
+  apiAttendanceRegister: 'Opening the register',
+  apiAttendanceReport: 'Counting attendance',
+  apiTeacherList: 'Loading the staff',
+  apiDefaulters: 'Finding who still owes',
+  apiMarkSheet: 'Opening the mark sheet',
+  apiSaveMarks: 'Saving the marks',
+  apiClassResults: 'Working out the results',
+  apiICardDetails: 'Fetching the photos',
+  apiSavePayment: 'Writing the receipt',
+  apiSaveSalary: 'Recording the salary',
+  apiExpenseList: 'Loading the expenses',
+  apiSelfTest: 'Checking the workbook',
+  apiBackupNow: 'Making the backup'
+};
+
+function progStart(label) {
+  PROG.n++;
+  var bar = $('progBar');
+  if (!bar) return;
+  $('progLabel').textContent = label || T('msg.wait', 'Working…');
+  if (PROG.n > 1) return;                       // already running
+  PROG.at = 0; PROG.t0 = Date.now();
+  bar.parentNode.classList.add('on');
+  clearInterval(PROG.timer);
+  PROG.timer = setInterval(function () {
+    /* approach 90 and never reach it: 0->45 in a second, 45->70 by four */
+    var secs = (Date.now() - PROG.t0) / 1000;
+    PROG.at = Math.min(90, 90 * (1 - Math.exp(-secs / 2.4)));
+    bar.style.width = PROG.at.toFixed(1) + '%';
+    $('progPct').textContent = Math.round(PROG.at) + '%';
+  }, 90);
+}
+
+function progDone() {
+  PROG.n = Math.max(0, PROG.n - 1);
+  if (PROG.n > 0) return;                        // something else still going
+  var bar = $('progBar');
+  if (!bar) return;
+  clearInterval(PROG.timer);
+  bar.style.width = '100%';
+  $('progPct').textContent = '100%';
+  setTimeout(function () {
+    bar.parentNode.classList.remove('on');
+    setTimeout(function () { bar.style.width = '0%'; }, 260);
+  }, 180);
+}
+
+/* busy() still exists for the few places that must block the screen —
+   saving a payment, for one — but reading now goes through the bar. */
 function busy(t) { Swal.fire({ title: t || T('msg.wait', 'Please wait…'), allowOutsideClick: false, didOpen: function () { Swal.showLoading(); } }); }
 function toast(msg, icon) {
   Swal.fire({ toast: true, position: 'top-end', icon: icon || 'success', title: msg,
@@ -3207,6 +3312,8 @@ function resetUiState() {
   ST.report = null; ST.roll = null; ST.dues = null; ST.lines = []; ST.waiveMap = {};
   ST.teacherDetail = null; ST.teacher_sel = null; ST.teachers = null;
   ST.attHome = null; ST.student = null; ST.foundReceipt = null; ST.pick = {};
+  ST.waRun = null; ST.register = null;
+  if (typeof REP_CACHE !== 'undefined') REP_CACHE = {};
   Object.keys(ST.charts || {}).forEach(function (k) {
     try { ST.charts[k].destroy(); } catch (e) {}
   });
@@ -4400,6 +4507,20 @@ function copyReminder() {
   var cur = r && r.queue[r.at];
   if (!cur) return;
   copyText(cur.msg, T('wa.copied', 'Message copied'));
+}
+
+/**
+ * The printed dues slip for this one family. It carries a UPI QR the parent
+ * can scan, which a WhatsApp text link cannot do — save it as a PDF from the
+ * print dialog and send that as an attachment.
+ */
+function reminderSlip() {
+  var r = ST.waRun;
+  var cur = r && r.queue[r.at];
+  if (!cur) return;
+  api('apiBulkDues', [cur.id]).then(function (list) {
+    if (list && list.length) renderBulkDues(list.filter(function (x) { return !x.error; }));
+  }).catch(fail);
 }
 
 function closeReminderRun() {
@@ -5799,7 +5920,7 @@ var REP_TABS = [
   ['book',  '📒', 'rep.tab.book',  'Cash book',      ''],
   ['sum',   '📋', 'rep.tab.sum',   'Summary',        ''],
   ['fee',   '💰', 'rep.tab.fee',   'Fee received',   ''],
-  ['out',   '💸', 'rep.tab.out',   'Money paid out', 'reports_full'],
+  ['out',   '💸', 'rep.tab.out',   'Money paid out', ''],
   ['waive', '🤝', 'rep.tab.waive', 'Fee waived',     ''],
   ['due',   '⏳', 'rep.tab.due',   'Still due',      ''],
   ['att',   '📋', 'rep.tab.att',   'Attendance',     ''],
@@ -5873,29 +5994,55 @@ function setPreset(kind, btn) {
   runReport();
 }
 
-function runReport() {
-  if (!val('repFrom') || !val('repTo')) {
+/* Each run is numbered. Tapping "Today" while "This month" is still in the
+ * air used to leave whichever answer landed last on screen — often the one
+ * you had already moved on from. A late answer is now dropped.
+ *
+ * A range that has already been fetched is drawn from memory, so flicking
+ * between Today and This month is instant the second time.
+ */
+var REP_SEQ = 0;
+var REP_CACHE = {};
+
+function runReport(force) {
+  var from = val('repFrom'), to = val('repTo');
+  if (!from || !to) {
     return Swal.fire(T('c.date', 'Dates'), T('rep.pickdates', 'Choose a From and a To date.'), 'warning');
   }
-  busy(T('rep.building', 'Adding it all up…'));
-  api('apiReport', val('repFrom'), val('repTo')).then(function (r) {
-    Swal.close();
-    ST.report = r;
-    $('repBody').hidden = false;
-    $('repRangeLbl').textContent = r.range.from + '  →  ' + r.range.to;
-    applyReportScope(r);
-    renderKpis(r); renderStory(r); renderCashBook(r); renderClassTable(r);
-    renderConcessions(r); renderDuplicates(r);
-    renderExpenses(r); renderCollectors(r); renderDefaulters(r); renderTxns(r);
-    drawCharts(r);
-    loadAttendanceReport();
-  }).catch(function (e) { Swal.close(); fail(e); });
+  /* The role is part of the key. A principal's report and an admin's for the
+     same dates are different documents — keying on dates alone would have
+     shown one role the other's cached copy. resetUiState empties it on every
+     sign-in as well, so nothing survives a change of user. */
+  var key = (ST.role || '?') + '|' + from + '~' + to;
+  var mine = ++REP_SEQ;
+
+  if (!force && REP_CACHE[key]) { paintReport(REP_CACHE[key]); return; }
+
+  api('apiReport', from, to).then(function (r) {
+    if (mine !== REP_SEQ) return;                 // a newer run has started
+    REP_CACHE[key] = r;
+    paintReport(r);
+  }).catch(function (e) { if (mine === REP_SEQ) fail(e); });
 }
 
-/** The principal's report has no money-out side; hide those panels entirely. */
+function paintReport(r) {
+  ST.report = r;
+  $('repBody').hidden = false;
+  $('repRangeLbl').textContent = r.range.from + '  \u2192  ' + r.range.to;
+  applyReportScope(r);
+  renderKpis(r); renderStory(r); renderCashBook(r); renderClassTable(r);
+  renderConcessions(r); renderDuplicates(r);
+  renderExpenses(r); renderCollectors(r); renderDefaulters(r); renderTxns(r);
+  drawCharts(r);
+  /* travels inside the report now — no second trip across the internet */
+  if (r.attendance) renderAttendanceReport(r.attendance);
+}
+
+/** The principal now sees what the school paid out — they are the one who
+ *  records it. Only "who collected how much" stays with Admin and Master. */
 function applyReportScope(r) {
   var show = !!r.full;
-  ['repExpCard', 'repNetCard', 'repCollCard'].forEach(function (id) {
+  ['repCollCard'].forEach(function (id) {
     if ($(id)) $(id).style.display = show ? '' : 'none';
   });
 }
@@ -5956,7 +6103,7 @@ function renderCashBook(r) {
   $('cbInSum').textContent = money(k.collection);
   $('cbInTot').textContent = money(k.collection);
 
-  var showOut = !!r.full;
+  var showOut = true;   /* the principal records the payments, so they see them */
   if ($('cbOutSide')) $('cbOutSide').style.display = showOut ? '' : 'none';
   if ($('cbThOut')) $('cbThOut').style.display = showOut ? '' : 'none';
   if (showOut) {
@@ -5985,11 +6132,13 @@ function renderCashBook(r) {
     return { date: d.date, inn: d.collection || 0, out: d.expense || 0, bal: run };
   }).reverse();
   $('cbDayBody').innerHTML = withBal.length ? withBal.map(function (d) {
-    return '<tr><td class="nowrap">' + esc(d.date) + '</td>' +
-      '<td class="num pos">' + (d.inn ? money(d.inn) : '—') + '</td>' +
-      (showOut ? '<td class="num neg">' + (d.out ? money(d.out) : '—') + '</td>' : '') +
+    return '<tr style="cursor:pointer" onclick="openDay(\'' + esc(d.date) + '\')" ' +
+      'title="' + T('rep.book.tapday', 'Tap to see every entry for this day') + '">' +
+      '<td class="nowrap">' + esc(d.date) + ' <span class="muted">\u203A</span></td>' +
+      '<td class="num pos">' + (d.inn ? money(d.inn) : '\u2014') + '</td>' +
+      (showOut ? '<td class="num neg">' + (d.out ? money(d.out) : '\u2014') + '</td>' : '') +
       '<td class="num"><b>' + money(d.bal) + '</b></td></tr>';
-  }).join('') : emptyRow(showOut ? 4 : 3, '📅', 'rep.book.nodays', 'No entries on any day in this period.');
+  }).join('') : emptyRow(showOut ? 4 : 3, '\uD83D\uDCC5', 'rep.book.nodays', 'No entries on any day in this period.');
 
   /* how the money reached you */
   var modes = r.modes || [];
@@ -5999,6 +6148,75 @@ function renderCashBook(r) {
     return '<tr><td><b>' + esc(m.mode) + '</b></td><td class="num">' + money(m.amount) +
       '</td><td class="num">' + pct + '%</td></tr>';
   }).join('') : emptyRow(3, '👛', 'rep.book.nomode', 'No receipts in this period.');
+}
+
+
+/* ------------------------------------------------- one day, opened up
+ * Tapping a line in the day book shows every entry behind that day's two
+ * figures: who paid what, and what the money went on. Built from the
+ * report already in memory, so it opens with no wait at all.
+ */
+function openDay(date) {
+  var r = ST.report;
+  if (!r) return;
+  var showOut = true;
+
+  var paid = (r.transactions || []).filter(function (t) { return t.date === date; });
+  var spent = (r.expenses || []).filter(function (e) { return e.date === date; });
+
+  var inTotal = paid.reduce(function (a, t) { return a + (t.amount || 0); }, 0);
+  var outTotal = spent.reduce(function (a, e) { return a + (e.amount || 0); }, 0);
+
+  var paidRows = paid.length ? paid.map(function (t) {
+    return '<tr><td><b>' + esc(t.name) + '</b><br><span class="muted">' +
+      esc(t.cls) + (t.section ? '-' + esc(t.section) : '') +
+      (t.roll ? ' · ' + T('c.roll', 'Roll') + ' ' + esc(t.roll) : '') + '</span></td>' +
+      '<td class="nowrap">' + esc(t.receiptNo) + '</td>' +
+      '<td>' + esc(t.mode) + '</td>' +
+      '<td class="num pos"><b>' + money(t.amount) + '</b></td></tr>';
+  }).join('') : '<tr><td colspan="4" class="muted" style="text-align:center;padding:18px">' +
+      T('rep.day.nofee', 'No fee was received on this day') + '</td></tr>';
+
+  var spentRows = spent.length ? spent.map(function (e) {
+    return '<tr><td><b>' + esc(e.category) + '</b>' + (e.sub ? ' <span class="muted">· ' + esc(e.sub) + '</span>' : '') +
+      (e.description ? '<br><span class="muted">' + esc(e.description) + '</span>' : '') + '</td>' +
+      '<td>' + esc(e.payeeName || '—') + '</td>' +
+      '<td>' + esc(e.mode) + '</td>' +
+      '<td class="num neg"><b>' + money(e.amount) + '</b></td></tr>';
+  }).join('') : '<tr><td colspan="4" class="muted" style="text-align:center;padding:18px">' +
+      T('rep.day.noexp', 'Nothing was paid out on this day') + '</td></tr>';
+
+  Swal.fire({
+    title: date,
+    width: 900,
+    confirmButtonText: T('c.close', 'Close'),
+    html:
+      '<div style="text-align:left">' +
+      '<div class="totalbar" style="margin:0 0 14px">' +
+        '<div><div class="lbl">' + T('rep.book.in', 'Money that came in') + '</div>' +
+        '<div class="val" style="color:#8ae2b4">' + money(inTotal) + '</div></div>' +
+        (showOut ? '<div class="sep"></div><div><div class="lbl">' + T('rep.book.out', 'Money that went out') +
+          '</div><div class="val" style="color:#ff9d96">' + money(outTotal) + '</div></div>' +
+          '<div class="sep"></div><div><div class="lbl">' + T('rep.book.cbal', 'Balance') +
+          '</div><div class="val">' + money(inTotal - outTotal) + '</div></div>' : '') +
+      '</div>' +
+
+      '<h3 class="hic" data-ic="💰" data-tone="green" style="font-size:14px;margin-bottom:8px">' +
+        T('rep.day.who', 'Who paid') + '</h3>' +
+      '<div class="tbl-wrap" style="max-height:260px;overflow:auto"><table class="tbl"><thead><tr>' +
+        '<th>' + T('c.name', 'Student') + '</th><th>' + T('c.receipt', 'Receipt') + '</th>' +
+        '<th>' + T('c.mode', 'Paid by') + '</th><th class="num">' + T('c.amount', 'Amount') + '</th>' +
+      '</tr></thead><tbody>' + paidRows + '</tbody></table></div>' +
+
+      (showOut ?
+        '<h3 class="hic" data-ic="💸" data-tone="red" style="font-size:14px;margin:16px 0 8px">' +
+          T('rep.day.spent', 'What the money went on') + '</h3>' +
+        '<div class="tbl-wrap" style="max-height:260px;overflow:auto"><table class="tbl"><thead><tr>' +
+          '<th>' + T('rep.th.head', 'Head') + '</th><th>' + T('rep.th.payee', 'Paid to') + '</th>' +
+          '<th>' + T('c.mode', 'Paid by') + '</th><th class="num">' + T('c.amount', 'Amount') + '</th>' +
+        '</tr></thead><tbody>' + spentRows + '</tbody></table></div>' : '') +
+      '</div>'
+  });
 }
 
 function renderKpis(r) {
@@ -6133,58 +6351,62 @@ function renderDefaulters(r) {
 /**
  * The fee reminder sent to a parent on WhatsApp.
  *
- * No emoji. The link carries correct UTF-8 either way, but several WhatsApp
+ * No emoji: the link carries correct UTF-8 either way, but several WhatsApp
  * builds render an astral-plane character as a replacement box, and a parent
  * reading a diamond question mark in a fee notice does not trust it.
  *
- * Written in plain Hindi whatever language the office is using, because the
- * person reading it is a parent, not the clerk. REMINDER_LANG in Settings
- * switches it to English for a family that would rather have that.
+ * Plain Hindi whatever language the office is using, because the person
+ * reading it is a parent, not the clerk. REMINDER_LANG in Settings switches
+ * it to English.
  *
- * Laid out as short labelled lines — one long sentence is hard to read on a
- * phone, and the old one also said "Class Class 2-A".
+ * Short on purpose. A long message gets skimmed, and if WhatsApp has an old
+ * draft sitting in that chat it appends ours to it — a short block makes
+ * that obvious at a glance instead of burying it.
  */
 function reminderText(d) {
   var s = (ST.boot && ST.boot.school) || {};
   var hi = String((ST.boot && ST.boot.settings && ST.boot.settings.REMINDER_LANG) || 'hi')
     .toLowerCase() !== 'en';
   var cls = d.cls + (d.section ? '-' + d.section : '');
-  var rupee = function (n) { return '\u20b9' + Number(n || 0).toLocaleString('en-IN'); };
-  var months = d.months || [];
+  var rupee = function (n) { return '₹' + Number(n || 0).toLocaleString('en-IN'); };
 
-  /* month by month, so a parent can see for themselves which months slipped
-     rather than being handed one lump sum they cannot check */
-  var lines = months.map(function (m) { return '  ' + m.month + ' — ' + rupee(m.amount); }).join('\n');
+  /* at most six months spelled out; the rest counted */
+  var months = (d.months || []).filter(function (m) { return m && m.amount; });
+  var shown = months.slice(0, 6);
+  var extra = months.length - shown.length;
 
   if (!hi) {
-    return 'Namaste,\n*' + s.name + '*\n\n' +
+    var enLines = shown.map(function (m) { return '  ' + m.month + ' - ' + rupee(m.amount); }).join('\n');
+    return '*' + s.name + '*\nFee reminder\n\n' +
       'Student: *' + d.name + '*\n' +
-      'Class: ' + cls + (d.roll ? '   |   Roll no: ' + d.roll : '') + '\n\n' +
-      (lines ? 'Fee pending, month by month:\n' + lines + '\n\n' : '') +
-      'Total pending: *' + rupee(d.pending) + '*\n' +
-      (d.since ? 'Pending since: *' + d.since + '*\n' : '') +
-      (d.lastPaid ? 'Last payment received: ' + d.lastPaid + '\n' : 'No payment received so far.\n') +
-      '\nKindly pay at the school office at your convenience.' +
-      (s.upi ? '\nYou may also pay by UPI: *' + s.upi + '*' : '') +
-      (s.phone ? '\n\nAny question? Call ' + s.phone : '') +
-      '\nThank you.';
+      'Class: ' + cls + (d.roll ? '  |  Roll no: ' + d.roll : '') + '\n\n' +
+      (enLines ? 'Pending:\n' + enLines +
+        (extra > 0 ? '\n  and ' + extra + ' more month(s)' : '') + '\n\n' : '') +
+      '*Total pending: ' + rupee(d.pending) + '*\n' +
+      (d.since ? 'Pending since ' + d.since + '\n' : '') +
+      (d.lastPaid ? 'Last paid on ' + d.lastPaid + '\n' : 'No payment received so far\n') +
+      '\nHow to pay:\n  At the school office' +
+      (s.upi ? '\n  UPI: ' + s.upi : '') +
+      (s.phone ? '\n\nAny question? Call ' + s.phone : '');
   }
 
-  return '\u0928\u092e\u0938\u094d\u0924\u0947,\n*' + s.name + '*\n\n' +
-    '\u091b\u093e\u0924\u094d\u0930/\u091b\u093e\u0924\u094d\u0930\u093e: *' + d.name + '*\n' +
-    '\u0915\u0915\u094d\u0937\u093e: ' + cls +
-      (d.roll ? '   |   \u0930\u094b\u0932 \u0928\u0902: ' + d.roll : '') + '\n\n' +
-    (lines ? '\u092e\u0939\u0940\u0928\u0947 \u0915\u0947 \u0939\u093f\u0938\u093e\u092c \u0938\u0947 \u092c\u093e\u0915\u0940 \u092b\u0940\u0938:\n' + lines + '\n\n' : '') +
-    '\u0915\u0941\u0932 \u092c\u093e\u0915\u0940: *' + rupee(d.pending) + '*\n' +
-    (d.since ? '*' + d.since + '* \u0938\u0947 \u092c\u093e\u0915\u0940 \u0939\u0948\n' : '') +
+  var lines = shown.map(function (m) { return '  ' + m.month + ' - ' + rupee(m.amount); }).join('\n');
+  return '*' + s.name + '*\nफीस की याद-दिलावा\n\n' +
+    'छात्र/छात्रा: *' + d.name + '*\n' +
+    'कक्षा: ' + cls +
+      (d.roll ? '  |  रोल नं: ' + d.roll : '') + '\n\n' +
+    (lines ? 'बाकी महीने:\n' + lines +
+      (extra > 0 ? '\n  और ' + extra + ' महीने' : '') + '\n\n' : '') +
+    '*कुल बाकी: ' + rupee(d.pending) + '*\n' +
+    (d.since ? d.since + ' से बाकी\n' : '') +
     (d.lastPaid
-      ? '\u092a\u093f\u091b\u0932\u0940 \u092c\u093e\u0930 \u091c\u092e\u093e: ' + d.lastPaid + '\n'
-      : '\u0905\u092d\u0940 \u0924\u0915 \u0915\u094b\u0908 \u092d\u0941\u0917\u0924\u093e\u0928 \u0928\u0939\u0940\u0902 \u0939\u0941\u0906 \u0939\u0948\u0964\n') +
-    '\n\u0915\u0943\u092a\u092f\u093e \u0938\u0941\u0935\u093f\u0927\u093e\u0928\u0941\u0938\u093e\u0930 \u0938\u094d\u0915\u0942\u0932 \u0915\u093e\u0930\u094d\u092f\u093e\u0932\u092f \u092e\u0947\u0902 \u091c\u092e\u093e \u0915\u0930 \u0926\u0947\u0902\u0964' +
-    (s.upi ? '\nUPI \u0938\u0947 \u092d\u0940 \u092d\u0947\u091c \u0938\u0915\u0924\u0947 \u0939\u0948\u0902: *' + s.upi + '*' : '') +
-    (s.phone ? '\n\n\u0915\u094b\u0908 \u091c\u093e\u0928\u0915\u093e\u0930\u0940 \u091a\u093e\u0939\u093f\u090f \u0924\u094b \u0915\u0949\u0932 \u0915\u0930\u0947\u0902: ' + s.phone : '') +
-    '\n\u0927\u0928\u094d\u092f\u0935\u093e\u0926\u0964';
+      ? 'पिछली बार जमा: ' + d.lastPaid + '\n'
+      : 'अभी तक कोई भुगतान नहीं\n') +
+    '\nजमा करने के तरीके:\n  स्कूल कार्यालय में' +
+    (s.upi ? '\n  UPI: ' + s.upi : '') +
+    (s.phone ? '\n\nपूछताछ: ' + s.phone : '');
 }
+
 
 function renderTxns(r) {
   $('repTxnBody').innerHTML = r.transactions.length ? r.transactions.map(function (t) {
@@ -6198,27 +6420,35 @@ function renderTxns(r) {
   }).join('') : emptyRow(10, '📭', 'rep.txn.none', 'No receipts were written in this period');
 }
 
+/** Only called when someone narrows the tab to one class; the whole-school
+    figures arrive inside the report itself. */
 function loadAttendanceReport() {
-  api('apiAttendanceReport', val('repFrom'), val('repTo'), '').then(function (a) {
-    $('kAtt').textContent = a.overall + '%';
-    $('kAttD').textContent = T('rep.att.days', '{n} days marked').replace('{n}', a.daysMarked);
-    $('kAttP').textContent = (a.totals.P || 0) + (a.totals.L || 0);
-    $('kAttA').textContent = a.totals.A || 0;
-    $('kAttLow').textContent = a.lowAttendance.length;
-    $('repAttClassBody').innerHTML = a.classes.length ? a.classes.map(function (c) {
-      return '<tr><td><b>' + esc(c.cls) + '-' + esc(c.section) + '</b></td>' +
-        '<td class="num">' + c.present + '</td><td class="num">' + c.total + '</td>' +
-        '<td class="num ' + (c.percent < 75 ? 'neg' : 'pos') + '">' + c.percent + '%</td></tr>';
-    }).join('') : emptyRow(4, '📭', 'rep.att.none', 'No attendance was marked in this period');
-    $('repAttBody').innerHTML = a.lowAttendance.length ? a.lowAttendance.map(function (s) {
-      return '<tr><td><b>' + esc(s.name) + '</b><br><span class="muted">' + esc(s.id) + '</span></td>' +
-        '<td>' + esc(s.cls) + '-' + esc(s.section) + '</td>' +
-        '<td class="num neg">' + s.A + '</td><td class="num neg">' + s.percent + '%</td></tr>';
-    }).join('') : emptyRow(4, '🎉', 'rep.att.allgood', 'Nobody is below 75%');
-  }).catch(function () {
+  api('apiAttendanceReport', val('repFrom'), val('repTo'), '')
+    .then(renderAttendanceReport)
+    .catch(function () { renderAttendanceReport(null); });
+}
+
+function renderAttendanceReport(a) {
+  if (!a) {
     $('repAttClassBody').innerHTML = emptyRow(4, '—', 'rep.att.none', 'No attendance was marked in this period');
     $('repAttBody').innerHTML = emptyRow(4, '—', 'rep.att.none', 'No attendance was marked in this period');
-  });
+    return;
+  }
+  $('kAtt').textContent = a.overall + '%';
+  $('kAttD').textContent = T('rep.att.days', '{n} days marked').replace('{n}', a.daysMarked);
+  $('kAttP').textContent = (a.totals.P || 0) + (a.totals.L || 0);
+  $('kAttA').textContent = a.totals.A || 0;
+  $('kAttLow').textContent = a.lowAttendance.length;
+  $('repAttClassBody').innerHTML = a.classes.length ? a.classes.map(function (c) {
+    return '<tr><td><b>' + esc(c.cls) + '-' + esc(c.section) + '</b></td>' +
+      '<td class="num">' + c.present + '</td><td class="num">' + c.total + '</td>' +
+      '<td class="num ' + (c.percent < 75 ? 'neg' : 'pos') + '">' + c.percent + '%</td></tr>';
+  }).join('') : emptyRow(4, '📭', 'rep.att.none', 'No attendance was marked in this period');
+  $('repAttBody').innerHTML = a.lowAttendance.length ? a.lowAttendance.map(function (s) {
+    return '<tr><td><b>' + esc(s.name) + '</b><br><span class="muted">' + esc(s.id) + '</span></td>' +
+      '<td>' + esc(s.cls) + '-' + esc(s.section) + '</td>' +
+      '<td class="num neg">' + s.A + '</td><td class="num neg">' + s.percent + '%</td></tr>';
+  }).join('') : emptyRow(4, '🎉', 'rep.att.allgood', 'Nobody is below 75%');
 }
 
 /* ------------------------------------------------------------- charts */
