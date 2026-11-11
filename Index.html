@@ -611,9 +611,178 @@ code{background:#f1ece4;border-radius:8px;padding:3px 8px;font-size:12.5px;word-
   .cb-row,.cb-head,.cb-foot,.cb-close{padding-left:14px;padding-right:14px}
 }
 </style>
+<script>window.SSMPS_ENDPOINT = "https://script.google.com/macros/s/AKfycbxnwHWnYomwUIXf3VJGPU9MFweClyZd3SlOxKyw2BLdVe3aJujTkawEgFRxGiVvALiT/exec";</script>
+<script>
+/* =====================================================================
+ * Transport.
+ *
+ * Inside Apps Script, Google injects google.script.run and this file does
+ * nothing. On a page hosted anywhere else — GitHub Pages, a school's own
+ * domain — there is no such object, so this builds one with the same shape:
+ *
+ *     google.script.run
+ *       .withSuccessHandler(fn)
+ *       .withFailureHandler(fn)
+ *       .apiWhatever(a, b, c)
+ *
+ * Nothing above this line in the app knows or cares which one it got.
+ *
+ * The call is a POST with Content-Type text/plain. That combination is a
+ * CORS "simple request", so the browser sends it straight through without a
+ * preflight — which matters because Apps Script cannot answer a preflight.
+ * If a browser or network blocks it anyway, small calls retry over JSONP.
+ * ===================================================================== */
+(function () {
+  if (window.google && window.google.script && window.google.script.run) return;
+
+  var KEY = 'ssmps_endpoint';
+
+  function endpoint() {
+    try { return localStorage.getItem(KEY) || (window.SSMPS_ENDPOINT || ''); }
+    catch (e) { return window.SSMPS_ENDPOINT || ''; }
+  }
+  function setEndpoint(url) {
+    try { localStorage.setItem(KEY, url); } catch (e) {}
+    window.SSMPS_ENDPOINT = url;
+  }
+  window.ssmpsEndpoint = endpoint;
+  window.ssmpsSetEndpoint = setEndpoint;
+
+  /* ---------------------------------------------------------- JSONP */
+  var jsonpN = 0;
+  function jsonp(fn, args) {
+    return new Promise(function (ok, no) {
+      var name = '__ssmps_cb_' + (++jsonpN);
+      var url = endpoint() + '?fn=' + encodeURIComponent(fn) +
+        '&args=' + encodeURIComponent(JSON.stringify(args || [])) +
+        '&callback=' + name;
+      if (url.length > 7000) return no(new Error('REQUEST_TOO_BIG'));
+
+      var tag = document.createElement('script');
+      var done = false;
+      var timer = setTimeout(function () {
+        if (!done) { cleanup(); no(new Error('NETWORK')); }
+      }, 60000);
+
+      function cleanup() {
+        done = true;
+        clearTimeout(timer);
+        try { delete window[name]; } catch (e) { window[name] = undefined; }
+        if (tag.parentNode) tag.parentNode.removeChild(tag);
+      }
+      window[name] = function (res) { cleanup(); ok(res); };
+      tag.onerror = function () { if (!done) { cleanup(); no(new Error('NETWORK')); } };
+      tag.src = url;
+      document.head.appendChild(tag);
+    });
+  }
+
+  /* ----------------------------------------------------------- POST */
+  function post(fn, args) {
+    return fetch(endpoint(), {
+      method: 'POST',
+      /* text/plain keeps this a simple request; Apps Script reads the body
+         the same way whatever the header says it is */
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ fn: fn, args: args || [] }),
+      redirect: 'follow'
+    }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP_' + r.status);
+      return r.json();
+    });
+  }
+
+  function call(fn, args) {
+    if (!endpoint()) return Promise.reject(new Error('NO_ENDPOINT'));
+    return post(fn, args).catch(function (e) {
+      /* A blocked POST looks like a thrown TypeError, not an HTTP status.
+         Retry small calls over JSONP; a photo upload cannot fit in a URL
+         and is allowed to fail loudly. */
+      if (/HTTP_/.test(e.message)) throw e;
+      return jsonp(fn, args);
+    }).then(function (res) {
+      if (!res || typeof res !== 'object') throw new Error('BAD_REPLY');
+      if (res.ok === false) throw new Error(res.error || 'ERROR');
+      return res.out;
+    });
+  }
+
+  /* ------------------------------------- the google.script.run shape */
+  function runner(onOk, onErr) {
+    var handler = {
+      get: function (_t, name) {
+        if (name === 'withSuccessHandler') {
+          return function (f) { return runner(f, onErr); };
+        }
+        if (name === 'withFailureHandler') {
+          return function (f) { return runner(onOk, f); };
+        }
+        if (typeof name !== 'string') return undefined;
+        return function () {
+          var args = Array.prototype.slice.call(arguments);
+          call(name, args)
+            .then(function (out) { if (onOk) onOk(out); })
+            .catch(function (err) { if (onErr) onErr({ message: err.message || String(err) }); });
+        };
+      }
+    };
+    return new Proxy({}, handler);
+  }
+
+  window.google = { script: { run: runner(null, null), host: { close: function () {} } } };
+
+  /* --------------------------------------------- first run on a host
+   * Nothing works until the page knows which Apps Script deployment to
+   * talk to. Ask once, plainly, and remember it.
+   */
+  window.addEventListener('DOMContentLoaded', function () {
+    if (endpoint()) return;
+    var box = document.createElement('div');
+    box.id = 'endpointSetup';
+    box.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#0e1f36;color:#fff;' +
+      'display:flex;align-items:center;justify-content:center;padding:24px;' +
+      'font-family:Inter,Segoe UI,system-ui,sans-serif';
+    box.innerHTML =
+      '<div style="background:#fff;color:#152338;border-radius:22px;padding:28px;max-width:520px;width:100%">' +
+      '<h2 style="margin:0 0 6px;font-size:20px">One-time setup</h2>' +
+      '<p style="margin:0 0 18px;font-size:14px;color:#4a5a70;line-height:1.6">' +
+      'Paste the web app link from your Apps Script project. In Apps Script: ' +
+      '<b>Deploy &rarr; Manage deployments</b>, copy the <b>Web app URL</b>. ' +
+      'It ends in <code>/exec</code>.</p>' +
+      '<input id="endpointInput" placeholder="https://script.google.com/macros/s/.../exec" ' +
+      'style="width:100%;padding:12px 14px;border:1.5px solid #e7e0d6;border-radius:11px;' +
+      'font:inherit;font-size:14px;box-sizing:border-box">' +
+      '<p id="endpointErr" style="color:#c0352f;font-size:13px;margin:8px 0 0;display:none"></p>' +
+      '<button id="endpointSave" style="margin-top:16px;width:100%;padding:13px;border:0;' +
+      'border-radius:999px;background:#2b6fd4;color:#fff;font:inherit;font-size:15px;' +
+      'font-weight:650;cursor:pointer">Save and continue</button>' +
+      '<p style="margin:14px 0 0;font-size:12px;color:#8294aa;line-height:1.5">' +
+      'Stored on this device only. To change it later, open Settings in the app.</p>' +
+      '</div>';
+    document.body.appendChild(box);
+
+    var input = box.querySelector('#endpointInput');
+    var err = box.querySelector('#endpointErr');
+    box.querySelector('#endpointSave').onclick = function () {
+      var v = String(input.value || '').trim();
+      if (!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(v)) {
+        err.style.display = 'block';
+        err.textContent = 'That does not look like a web app URL. It should start with ' +
+          'https://script.google.com/macros/s/ and end with /exec';
+        return;
+      }
+      setEndpoint(v);
+      location.reload();
+    };
+    input.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter') box.querySelector('#endpointSave').click();
+    });
+  });
+})();
+</script>
 </head>
 <body>
-<script>window.START_ROLE = '<?= startRole ?>';</script>
+<script>window.START_ROLE = '' + (new URLSearchParams(location.search).get('p') || '') + '';</script>
 
 <!-- ============================================================ LOGIN -->
 <div id="login">
