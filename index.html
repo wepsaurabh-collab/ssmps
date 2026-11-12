@@ -66,7 +66,11 @@ a{color:var(--brand-2);text-decoration:none}
 .login-foot{margin-top:16px;font-size:11.5px;color:var(--ink-3)}
 
 /* ----------------------------------------------------------------- shell */
-#app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh}
+/* The dark colour belongs to the grid, not only to the sidebar. The sidebar
+   is sticky and 100vh tall, so on a long page its column showed the warm page
+   background underneath it — a pale block down the left. */
+#app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh;
+  background:linear-gradient(90deg,#101b2d 0 248px,var(--bg) 248px)}
 .sidebar{background:linear-gradient(180deg,#16233a,#101b2d);color:#c6d4e6;padding:16px 11px;
   display:flex;flex-direction:column;gap:3px;position:sticky;top:0;height:100vh;overflow-y:auto}
 .brand{display:flex;gap:11px;align-items:center;padding:4px 7px 15px;
@@ -446,6 +450,22 @@ html[lang="hi"] .lg-v{font-size:29px}
   animation:fall 2.2s ease-in forwards}
 @keyframes fall{to{transform:translateY(105vh) rotate(540deg);opacity:.1}}
 
+/* ------------------------------------------------------- block screen */
+.tilegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px;min-width:0}
+.tile{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;font:inherit;
+  cursor:pointer;background:#fff;border:1.5px solid var(--line);border-radius:var(--r);
+  padding:22px 20px 20px;box-shadow:var(--sh);transition:.16s;min-height:148px;min-width:0}
+.tile:hover{transform:translateY(-3px);border-color:var(--brand-2);box-shadow:var(--sh-lg)}
+.tile .tile-ic{font-size:34px;line-height:1;margin-bottom:8px}
+.tile b{font-size:17px;font-weight:750;line-height:1.2}
+.tile span:last-child{font-size:12.5px;color:var(--ink-3);line-height:1.45}
+@media (max-width:760px){
+  .tilegrid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .tile{padding:18px 15px 16px;min-height:128px}
+  .tile .tile-ic{font-size:29px}
+  .tile b{font-size:15px}
+}
+
 /* a big friendly action card — used where there is one obvious next step */
 .bigaction{display:flex;align-items:center;gap:16px;width:100%;text-align:left;font:inherit;cursor:pointer;
   background:#fff;border:1.5px solid var(--line);border-radius:var(--r);padding:18px 20px;
@@ -516,32 +536,56 @@ code{background:#f1ece4;border-radius:8px;padding:3px 8px;font-size:12.5px;word-
   font-family:"Segoe UI",Arial,sans-serif;color:#000;background:#fff}
 .rc-half:last-child{border-right:0}
 .rc-blank{background:#fff}
-.rc-head{display:flex;align-items:center;gap:4mm;border-bottom:2px solid #0a192f;padding-bottom:2mm}
-.rc-logo{width:16mm;height:16mm;object-fit:contain;flex:0 0 auto}
-.rc-hx{flex:1;text-align:center;min-width:0}
-.rc-name{font-size:15pt;font-weight:900;line-height:1.1;color:#0a192f}
-.rc-tag{font-size:6.5pt;font-weight:700;color:#b26a08;line-height:1.2;margin-top:1mm}
-.rc-addr{font-size:7.5pt;color:#333;margin-top:.6mm}
-.rc-title{text-align:center;font-size:10pt;font-weight:800;letter-spacing:.04em;
-  margin:2.5mm 0;padding:1.4mm 0;background:#f1ece4;border-radius:2mm}
-.rc-bio{width:100%;border-collapse:collapse;font-size:9pt;margin-bottom:2.5mm}
-.rc-bio td{padding:1mm 0;border-bottom:1px dotted #bbb}
-.rc-marks{width:100%;border-collapse:collapse;font-size:9pt}
-.rc-marks th{background:#0a192f;color:#fff;padding:1.6mm 2mm;font-size:8pt;
-  text-transform:uppercase;letter-spacing:.03em;text-align:left}
-.rc-marks th:not(:first-child){text-align:center}
-.rc-marks td{padding:1.5mm 2mm;border-bottom:1px solid #ddd}
-.rc-marks tbody tr:nth-child(even){background:#faf8f4}
-.rc-marks .rc-tot td{border-top:2px solid #0a192f;border-bottom:2px solid #0a192f;background:#f1ece4}
-.rc-sum{display:flex;gap:3mm;margin-top:3mm}
-.rc-sum > div{flex:1;border:1.5px solid #0a192f;border-radius:2mm;padding:2mm;text-align:center}
-.rc-sum span{display:block;font-size:7.5pt;color:#555;text-transform:uppercase;letter-spacing:.04em}
-.rc-sum b{font-size:13pt;display:block;margin-top:.6mm}
 .rc-pass{color:#0e7a45}
 .rc-fail{color:#c0352f}
-.rc-remark{margin-top:2.5mm;font-size:8.5pt;border-left:3px solid #e08a1e;padding-left:2mm}
-.rc-sign{margin-top:auto;padding-top:9mm;display:flex;justify-content:space-between;font-size:8.5pt;font-weight:700}
-.rc-sign span{border-top:1px solid #000;padding-top:1mm;min-width:38mm;text-align:center}
+
+/* ---- the cover: what the family sees first, so it is mostly air ---- */
+.rcv{align-items:center;text-align:center;padding:10mm 9mm 7mm}
+.rcv-school{font-size:19pt;font-weight:900;line-height:1.05;letter-spacing:-.01em}
+.rcv-tag{font-size:8.5pt;font-weight:700;margin-top:2.5mm;line-height:1.3}
+.rcv-addr{font-size:8.5pt;font-weight:600;margin-top:1.5mm;line-height:1.35}
+.rcv-logo{width:36mm;height:36mm;object-fit:contain;margin:5mm 0 3mm}
+.rcv-nologo{border:1px dashed #bbb;border-radius:3mm}
+.rcv-motto{font-size:11pt;font-weight:700;line-height:1.2}
+.rcv-since{font-size:8pt;font-weight:700;letter-spacing:.22em;margin-top:1.5mm}
+.rcv-title{font-size:21pt;font-weight:900;line-height:1.06;margin:5mm 0 2mm}
+.rcv-session{font-size:10pt;font-weight:700;letter-spacing:.02em}
+.rcv-fields{width:100%;margin-top:7mm;text-align:left}
+.rcv-line{display:flex;align-items:flex-end;gap:3mm;margin-bottom:4.5mm}
+.rcv-lbl{font-size:11pt;font-weight:700;min-width:24mm;flex:0 0 auto}
+.rcv-val{flex:1;font-size:11pt;border-bottom:1.5px dotted #000;min-height:6mm;padding:0 1mm 1mm}
+.rcv-sign{width:100%;text-align:left;font-size:10.5pt;font-weight:700;margin-top:4mm;
+  display:flex;align-items:flex-end;gap:3mm}
+.rcv-dots{flex:1;border-bottom:1.5px dotted #000;min-height:5mm}
+.rcv-foot{margin-top:auto;padding-top:5mm;width:100%;display:flex;justify-content:space-between;
+  gap:3mm;font-size:8pt;font-weight:700;flex-wrap:wrap}
+
+/* ---- the back: the marks, ruled like an ankpatra ---- */
+.rcm{padding:8mm 8mm 6mm}
+.rcm-head{display:flex;align-items:center;gap:3.5mm;border-bottom:2px solid #000;padding-bottom:2mm}
+.rcm-logo{width:14mm;height:14mm;object-fit:contain;flex:0 0 auto}
+.rcm-head > div{flex:1;min-width:0;text-align:center}
+.rcm-school{font-size:13pt;font-weight:900;line-height:1.1}
+.rcm-addr{font-size:7.5pt;margin-top:.8mm}
+.rcm-title{text-align:center;font-size:10pt;font-weight:800;letter-spacing:.05em;
+  margin:2.5mm 0;padding:1.4mm 0;border:1.5px solid #000}
+.rcm-bio{width:100%;border-collapse:collapse;font-size:9.5pt;margin-bottom:2.5mm}
+.rcm-bio td{padding:1.4mm 0;border-bottom:1px dotted #999}
+.rcm-marks{width:100%;border-collapse:collapse;font-size:9.5pt;border:1.5px solid #000}
+.rcm-marks th{border:1px solid #000;padding:1.6mm 2mm;font-size:8pt;font-weight:800;
+  text-transform:uppercase;letter-spacing:.03em;background:#e9e9e9}
+.rcm-marks td{border:1px solid #000;padding:1.3mm 2mm;text-align:center;height:5.6mm}
+.rcm-marks td.rcm-sub{text-align:left;font-weight:600}
+.rcm-marks td.rcm-got{font-weight:800}
+.rcm-marks .rcm-tot td{border-top:1.5px solid #000;background:#e9e9e9;font-weight:800}
+.rcm-sum{display:flex;gap:3mm;margin-top:3mm}
+.rcm-sum > div{flex:1;border:1.5px solid #000;padding:2mm;text-align:center}
+.rcm-sum span{display:block;font-size:7.5pt;text-transform:uppercase;letter-spacing:.04em}
+.rcm-sum b{font-size:13pt;display:block;margin-top:.6mm}
+.rcm-remark{margin-top:2.5mm;font-size:9pt;border:1px solid #000;padding:2mm;min-height:9mm}
+.rcm-sign{margin-top:auto;padding-top:8mm;display:flex;justify-content:space-between;
+  font-size:8.5pt;font-weight:700;gap:3mm}
+.rcm-sign span{border-top:1px solid #000;padding-top:1mm;flex:1;text-align:center}
 
 /* marks entry: a number box in a table row is not a full-width field */
 .mk-in{max-width:120px}
@@ -602,6 +646,8 @@ code{background:#f1ece4;border-radius:8px;padding:3px 8px;font-size:12.5px;word-
   #app{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
   /* a single row of pills that scrolls sideways. align-items:center stops
      the active pill stretching to the whole strip, which it used to do. */
+  /* one column on a phone, so the left-hand stripe must go */
+  #app{background:var(--bg)}
   .sidebar{position:sticky;top:0;height:auto;min-height:0;flex:0 0 auto;flex-direction:row;
     align-items:center;overflow-x:auto;overflow-y:hidden;gap:7px;padding:9px 10px;z-index:30}
   .brand,.sidefoot,.nav-sep{display:none}
@@ -858,7 +904,8 @@ code{background:#f1ece4;border-radius:8px;padding:3px 8px;font-size:12.5px;word-
 
     <div class="nav-sep" data-i18n="nav.daily">Every day</div>
     <button class="navitem" data-pg="tdash"  onclick="go('tdash')"><span class="ic">🏫</span><span data-i18n="nav.myclass">My Classes</span></button>
-    <button class="navitem" data-pg="dash"   onclick="go('dash')"><span class="ic">🏠</span><span data-i18n="nav.dashboard">Today</span></button>
+    <button class="navitem" data-pg="home"   onclick="go('home')"><span class="ic">🏠</span><span data-i18n="nav.home">Home</span></button>
+    <button class="navitem" data-pg="dash"   onclick="go('dash')"><span class="ic">📊</span><span data-i18n="nav.dashboard">Today</span></button>
     <button class="navitem" data-pg="att"    onclick="go('att')"><span class="ic">📋</span><span data-i18n="nav.attendance">Attendance</span></button>
     <button class="navitem" data-pg="fee"    onclick="go('fee')"><span class="ic">💰</span><span data-i18n="nav.fee">Collect Fee</span></button>
     <button class="navitem" data-pg="adm"    onclick="go('adm')"><span class="ic">🧒</span><span data-i18n="nav.admission">New Admission</span></button>
@@ -1042,6 +1089,18 @@ code{background:#f1ece4;border-radius:8px;padding:3px 8px;font-size:12.5px;word-
       </section>
 
       <!-- ------------------------------------------------- DASHBOARD -->
+      <!-- The block screen. Everything this person can do, in one place,
+           for someone who has not worked on a computer much. -->
+      <section id="pg-home" class="page">
+        <div class="hero">
+          <div class="hero-text">
+            <h2 id="homeGreet">Welcome!</h2>
+            <p id="homeSub" data-i18n="home.sub">Tap what you want to do.</p>
+          </div>
+        </div>
+        <div class="tilegrid" id="homeTiles"></div>
+      </section>
+
       <section id="pg-dash" class="page">
         <div id="dashAlert"></div>
         <div class="grid g4">
@@ -1625,7 +1684,14 @@ code{background:#f1ece4;border-radius:8px;padding:3px 8px;font-size:12.5px;word-
 
           <button class="btn lg block" style="margin-top:14px" onclick="printResults()"
             data-i18n="res.print">🖨️ Print result cards (A4, two to a page)</button>
-          <p class="hint" data-i18n="res.printhint">Landscape A4. Two cards side by side, each with the school details, every subject, total, percentage, grade and rank.</p>
+          <p class="hint" data-i18n="res.printhint">Landscape A4, printed on both sides. The cover is on the front, that child's marks on the back. Two children per sheet — cut down the middle and each gets a complete card.</p>
+          <!-- Printers disagree about which way they turn the paper over.
+               One tick and a reprint beats guessing on the school's behalf. -->
+          <label style="display:flex;align-items:center;gap:9px;margin-top:10px;font-size:13px;
+            font-weight:600;color:var(--ink-2);cursor:pointer">
+            <input type="checkbox" id="resSwapBack" style="width:19px;height:19px;accent-color:var(--brand-2)">
+            <span data-i18n="res.swapback">Swap the back page (tick this if the marks come out on the wrong child's card)</span>
+          </label>
         </div>
       </section>
 
@@ -2113,6 +2179,9 @@ var HI = {
   'nav.daily': 'रोज़ का काम',
   'nav.records': 'रिकॉर्ड',
   'nav.analysis': 'हिसाब-किताब',
+  'nav.home': 'होम',
+  'home.sub': 'जो करना है उस पर दबाएँ।',
+  'crumb.home': 'जो-जो आप कर सकते हैं',
   'nav.dashboard': 'आज',
   'nav.attendance': 'हाज़िरी',
   'nav.myclass': 'मेरी कक्षाएँ',
@@ -2576,6 +2645,14 @@ var HI = {
   'res.father': 'पिता',
   'res.classteacher': 'कक्षा अध्यापक',
   'res.principal': 'प्रधानाचार्य',
+  'res.progress': 'प्रगति रिपोर्ट कार्ड',
+  'res.session': 'सत्र',
+  'res.parentsign': 'अभिभावक के हस्ताक्षर',
+  'res.parentsign2': 'अभिभावक',
+  'res.marksheet': 'अंकपत्र',
+  'res.swapback': 'पीछे का पन्ना बदलें (अगर अंक गलत बच्चे के कार्ड पर छपें तो यह चुनें)',
+  'c.contact': 'संपर्क',
+  'c.email': 'ईमेल',
   'res.print': '🖨️ परिणाम पत्र छापें (A4, एक पन्ने पर दो)',
   'res.printhint': 'A4 लैंडस्केप। आमने-सामने दो पत्र, हर एक में स्कूल का विवरण, सभी विषय, कुल, प्रतिशत, ग्रेड और स्थान।',
   'res.pickstudents': 'कम से कम एक बच्चा चुनिए।',
@@ -2885,24 +2962,51 @@ var ST = {
 
 /** key = the i18n id used by the sidebar, so titles translate the same way. */
 var PAGE_META = {
-  tdash: { key: 'nav.myclass',    t: 'My Classes',       c: 'Attendance and class requests',  scope: 'teacher' },
-  dash:  { key: 'nav.dashboard',  t: 'Dashboard',        c: "Today's overview",               scope: 'base' },
-  att:   { key: 'nav.attendance', t: 'Attendance',       c: 'Daily roll call',                scope: 'attendance' },
-  fee:   { key: 'nav.fee',        t: 'Fee Collection',   c: 'Payment, concession, receipt',   scope: 'receipts' },
-  adm:   { key: 'nav.admission',  t: 'New Admission',    c: 'Add a new student',              scope: 'receipts' },
-  dues:  { key: 'nav.dues',       t: 'Dues & Reminders', c: 'Balances and bulk actions',      scope: 'receipts' },
-  appr:  { key: 'nav.approvals',  t: 'Approvals',        c: 'Class change requests',          scope: 'approve' },
-  stu:   { key: 'nav.students',   t: 'Students',         c: 'Records, promotion, exit',       scope: 'update' },
-  icard: { key: 'nav.icards',     t: 'I-Cards',          c: 'Bulk identity cards',            scope: 'base' },
-  staff: { key: 'nav.staff',      t: 'Staff & Salary',   c: 'Salary, PINs and expenses',      scope: 'staff' },
-  exp:   { key: 'nav.expenses',   t: 'Expenses',         c: 'Everything the school pays out', scope: 'admin' },
-  marks: { key: 'nav.marks',      t: 'Marks',            c: 'Enter marks for your class',     scope: 'marks' },
-  res:   { key: 'nav.results',    t: 'Results',          c: 'Result cards, class by class',   scope: 'results' },
-  rep:   { key: 'nav.reports',    t: 'Reports',          c: 'Management dashboard',           scope: 'reports' },
+  home:  { key: 'nav.home',       t: 'Home',             c: 'Everything you can do',          scope: 'base',       ic: '\uD83C\uDFE0' },
+  tdash: { key: 'nav.myclass',    t: 'My Classes',       c: 'Attendance and class requests',  scope: 'teacher',    ic: '\uD83C\uDFEB' },
+  dash:  { key: 'nav.dashboard',  t: 'Dashboard',        c: "Today's overview",               scope: 'base',       ic: '\uD83D\uDCCA' },
+  att:   { key: 'nav.attendance', t: 'Attendance',       c: 'Daily roll call',                scope: 'attendance', ic: '\uD83D\uDCCB' },
+  fee:   { key: 'nav.fee',        t: 'Fee Collection',   c: 'Payment, concession, receipt',   scope: 'receipts',   ic: '\uD83D\uDCB0' },
+  adm:   { key: 'nav.admission',  t: 'New Admission',    c: 'Add a new student',              scope: 'receipts',   ic: '\uD83D\uDC76' },
+  dues:  { key: 'nav.dues',       t: 'Dues & Reminders', c: 'Balances and bulk actions',      scope: 'receipts',   ic: '\u23F3' },
+  appr:  { key: 'nav.approvals',  t: 'Approvals',        c: 'Class change requests',          scope: 'approve',    ic: '\u2705' },
+  stu:   { key: 'nav.students',   t: 'Students',         c: 'Records, promotion, exit',       scope: 'update',     ic: '\uD83D\uDC67' },
+  icard: { key: 'nav.icards',     t: 'I-Cards',          c: 'Bulk identity cards',            scope: 'base',       ic: '\uD83E\uDEAA' },
+  staff: { key: 'nav.staff',      t: 'Staff & Salary',   c: 'Salary, PINs and expenses',      scope: 'staff',      ic: '\uD83D\uDC68\u200D\uD83C\uDFEB' },
+  exp:   { key: 'nav.expenses',   t: 'Expenses',         c: 'Everything the school pays out', scope: 'expense',    ic: '\uD83D\uDCB8' },
+  marks: { key: 'nav.marks',      t: 'Marks',            c: 'Enter marks for your class',     scope: 'marks',      ic: '\uD83D\uDCDD' },
+  res:   { key: 'nav.results',    t: 'Results',          c: 'Result cards, class by class',   scope: 'results',    ic: '\uD83C\uDFC6' },
+  rep:   { key: 'nav.reports',    t: 'Reports',          c: 'Management dashboard',           scope: 'reports',    ic: '\uD83D\uDCD2' },
   /* Admin only. The principal issues teacher PINs from Staff & Salary;
      nothing else on this page is theirs to change. */
-  set:   { key: 'nav.settings',   t: 'Settings',         c: 'Passwords, ledger, diagnostics', scope: 'settings' }
+  set:   { key: 'nav.settings',   t: 'Settings',         c: 'Passwords, ledger, diagnostics', scope: 'settings',   ic: '\u2699\uFE0F' }
 };
+
+/**
+ * The block screen: one big tile for every page this person can open.
+ *
+ * Built from PAGE_META and the signed-in scopes, so a role can never be
+ * shown a tile it cannot use — the same list the sidebar is built from,
+ * laid out where someone who does not know the app will look first.
+ */
+function renderHome() {
+  var box = $('homeTiles');
+  if (!box) return;
+  var tiles = Object.keys(PAGE_META).filter(function (pg) {
+    if (pg === 'home') return false;
+    if (pg === 'tdash') return ST.role === 'teacher';
+    return has(PAGE_META[pg].scope);
+  });
+  box.innerHTML = tiles.map(function (pg) {
+    var m = PAGE_META[pg];
+    return '<button class="tile" onclick="go(\'' + pg + '\')">' +
+      '<span class="tile-ic">' + m.ic + '</span>' +
+      '<b>' + esc(T(m.key, m.t)) + '</b>' +
+      '<span>' + esc(T('crumb.' + pg, m.c)) + '</span></button>';
+  }).join('');
+  $('homeGreet').textContent = greeting() + ', ' + roleName() + '!';
+  $('homeSub').textContent = T('home.sub', 'Tap what you want to do.');
+}
 
 function pageTitle(pg) {
   var m = PAGE_META[pg];
@@ -2914,7 +3018,9 @@ function pageCrumb(pg) {
 }
 
 /** First page each role lands on. */
-var ROLE_HOME = { teacher: 'tdash', principal: 'dash', admin: 'dash', master: 'rep' };
+/* Everyone lands on the block screen — it is the map of what this person
+   can do. A teacher keeps their own class screen, which is already that. */
+var ROLE_HOME = { teacher: 'tdash', principal: 'home', admin: 'home', master: 'home' };
 
 /* ============================================================== api */
 function rawApi(fn) {
@@ -3422,6 +3528,7 @@ function go(pg) {
   if (pg === 'marks') initMarksPage();
   if (pg === 'res') initResultsPage();
   if (pg === 'rep') initReportPage();
+  if (pg === 'home') renderHome();
   if (pg === 'set') { loadSettings(); renderPortalLinks(); loadBackupStatus(); initEndpointCard(); }
 }
 
@@ -5146,11 +5253,17 @@ function loadAttHome() {
       : '';
     ['attNote', 'tdNote'].forEach(function (id) { if ($(id)) $(id).innerHTML = note; });
     if (h.teacher && $('tdGreet')) $('tdGreet').textContent = greeting() + ', ' + h.teacher.name.split(' ')[0] + '!';
+    /* Refill every time, not just when empty. Filling once meant a teacher
+       who signed in before their classes were assigned kept the old list —
+       which is how a class they do not teach ended up in the box. */
     var sel = $('mcCls');
-    if (sel && !sel.options.length) {
+    if (sel) {
       var seen = {}, list = [];
       h.classes.forEach(function (c) { if (!seen[c.cls]) { seen[c.cls] = 1; list.push(c.cls); } });
+      var cur = sel.value;
       sel.innerHTML = list.map(function (c) { return '<option>' + esc(c) + '</option>'; }).join('');
+      if (list.indexOf(cur) >= 0) sel.value = cur;
+      if (sel.value) loadMyClass();
     }
   }).catch(function (e) {
     $('attClasses').innerHTML = '<div class="banner bad"><div>' + esc(e.message) + '</div></div>';
@@ -6351,61 +6464,95 @@ function renderDefaulters(r) {
 /**
  * The fee reminder sent to a parent on WhatsApp.
  *
- * No emoji: the link carries correct UTF-8 either way, but several WhatsApp
- * builds render an astral-plane character as a replacement box, and a parent
- * reading a diamond question mark in a fee notice does not trust it.
+ * Written the way the school writes to a family: a greeting, who it is
+ * about, the months laid out one per line with the school fee and the bus
+ * fare shown separately, the total, how to pay, and a line telling anyone
+ * who has already paid to ignore it.
  *
- * Plain Hindi whatever language the office is using, because the person
- * reading it is a parent, not the clerk. REMINDER_LANG in Settings switches
- * it to English.
- *
- * Short on purpose. A long message gets skimmed, and if WhatsApp has an old
- * draft sitting in that chat it appends ours to it — a short block makes
- * that obvious at a glance instead of burying it.
+ * No emoji in the body text beyond the few section markers: the link carries
+ * correct UTF-8 either way, but some WhatsApp builds draw an astral-plane
+ * character as a box, and a parent reading a box in a fee notice does not
+ * trust it. The markers below are the ones that render everywhere.
  */
 function reminderText(d) {
   var s = (ST.boot && ST.boot.school) || {};
   var hi = String((ST.boot && ST.boot.settings && ST.boot.settings.REMINDER_LANG) || 'hi')
     .toLowerCase() !== 'en';
   var cls = d.cls + (d.section ? '-' + d.section : '');
-  var rupee = function (n) { return '₹' + Number(n || 0).toLocaleString('en-IN'); };
+  var rupee = function (n) { return '\u20b9' + Number(n || 0).toLocaleString('en-IN'); };
 
-  /* at most six months spelled out; the rest counted */
-  var months = (d.months || []).filter(function (m) { return m && m.amount; });
-  var shown = months.slice(0, 6);
-  var extra = months.length - shown.length;
+  /* One line per month. A month can carry both a school fee and a bus fare;
+     the parent wants to see which is which, so they are added as "400 + 600"
+     rather than silently summed. */
+  var byMonth = {}, order = [];
+  (d.months || []).forEach(function (m) {
+    if (!m || !m.amount) return;
+    if (!byMonth[m.month]) { byMonth[m.month] = []; order.push(m.month); }
+    byMonth[m.month].push(m.amount);
+  });
+  var shown = order.slice(0, 3);
+  var extra = order.length - shown.length;
+  var lines = shown.map(function (mn) {
+    return '  \u2022 ' + monthLong(mn, hi) + ' : ' +
+      byMonth[mn].map(rupee).join(' + ');
+  }).join('\n');
+
+  var upi = s.upi || '';
 
   if (!hi) {
-    var enLines = shown.map(function (m) { return '  ' + m.month + ' - ' + rupee(m.amount); }).join('\n');
-    return '*' + s.name + '*\nFee reminder\n\n' +
+    return 'Dear Parent, greetings!\n\n' +
+      'This is to inform you from ' + s.name + ' that the fee for the last few ' +
+      'months has not yet been paid.\n\n' +
       'Student: *' + d.name + '*\n' +
       'Class: ' + cls + (d.roll ? '  |  Roll no: ' + d.roll : '') + '\n\n' +
-      (enLines ? 'Pending:\n' + enLines +
-        (extra > 0 ? '\n  and ' + extra + ' more month(s)' : '') + '\n\n' : '') +
-      '*Total pending: ' + rupee(d.pending) + '*\n' +
-      (d.since ? 'Pending since ' + d.since + '\n' : '') +
-      (d.lastPaid ? 'Last paid on ' + d.lastPaid + '\n' : 'No payment received so far\n') +
-      '\nHow to pay:\n  At the school office' +
-      (s.upi ? '\n  UPI: ' + s.upi : '') +
-      (s.phone ? '\n\nAny question? Call ' + s.phone : '');
+      (lines ? 'Pending month by month:\n' + lines +
+        (extra > 0 ? '\n  (and ' + extra + ' more month' + (extra > 1 ? 's' : '') + '...)' : '') + '\n\n' : '') +
+      '*Total pending: ' + rupee(d.pending) + '*\n\n' +
+      'Please clear it at your earliest convenience:\n' +
+      (upi ? '  > UPI: ' + upi + '\n' : '') +
+      '  > Or at the school office\n\n' +
+      '(If you have already paid, please ignore this message.)\n\n' +
+      (s.phone ? 'For any question: ' + s.phone + '\n' : '') +
+      'Thank you.\n' + s.name;
   }
 
-  var lines = shown.map(function (m) { return '  ' + m.month + ' - ' + rupee(m.amount); }).join('\n');
-  return '*' + s.name + '*\nफीस की याद-दिलावा\n\n' +
-    'छात्र/छात्रा: *' + d.name + '*\n' +
-    'कक्षा: ' + cls +
-      (d.roll ? '  |  रोल नं: ' + d.roll : '') + '\n\n' +
-    (lines ? 'बाकी महीने:\n' + lines +
-      (extra > 0 ? '\n  और ' + extra + ' महीने' : '') + '\n\n' : '') +
-    '*कुल बाकी: ' + rupee(d.pending) + '*\n' +
-    (d.since ? d.since + ' से बाकी\n' : '') +
-    (d.lastPaid
-      ? 'पिछली बार जमा: ' + d.lastPaid + '\n'
-      : 'अभी तक कोई भुगतान नहीं\n') +
-    '\nजमा करने के तरीके:\n  स्कूल कार्यालय में' +
-    (s.upi ? '\n  UPI: ' + s.upi : '') +
-    (s.phone ? '\n\nपूछताछ: ' + s.phone : '');
+  return '\u092a\u094d\u0930\u093f\u092f \u0905\u092d\u093f\u092d\u093e\u0935\u0915, \u0938\u093e\u0926\u0930 \u0928\u092e\u0938\u094d\u0915\u093e\u0930!\n\n' +
+    s.name + ' \u0915\u0940 \u0913\u0930 \u0938\u0947 \u0906\u092a\u0915\u094b \u0938\u0942\u091a\u093f\u0924 \u0915\u093f\u092f\u093e \u091c\u093e\u0924\u093e \u0939\u0948 \u0915\u093f ' +
+    '\u0906\u092a\u0915\u0947 \u092c\u091a\u094d\u091a\u0947 \u0915\u0940 \u092a\u093f\u091b\u0932\u0947 \u0915\u0941\u091b \u092e\u0939\u0940\u0928\u094b\u0902 \u0915\u0940 \u092b\u0940\u0938 ' +
+    '\u0905\u092d\u0940 \u091c\u092e\u093e \u0928\u0939\u0940\u0902 \u0939\u0941\u0908 \u0939\u0948\u0964\n\n' +
+    '\u091b\u093e\u0924\u094d\u0930/\u091b\u093e\u0924\u094d\u0930\u093e: *' + d.name + '*\n' +
+    '\u0915\u0915\u094d\u0937\u093e: ' + cls +
+      (d.roll ? '  |  \u0930\u094b\u0932 \u0928\u0902: ' + d.roll : '') + '\n\n' +
+    (lines ? '\u092c\u0915\u093e\u092f\u093e \u092b\u0940\u0938 \u0915\u093e \u092a\u0942\u0930\u093e \u0939\u093f\u0938\u093e\u092c:\n' + lines +
+      (extra > 0 ? '\n  (\u0914\u0930 \u0905\u0928\u094d\u092f ' + extra + ' \u092e\u0939\u0940\u0928\u0947...)' : '') + '\n\n' : '') +
+    '*\u0915\u0941\u0932 \u092c\u0915\u093e\u092f\u093e \u0930\u093e\u0936\u093f: ' + rupee(d.pending) + '*\n\n' +
+    '\u0915\u0943\u092a\u092f\u093e \u0905\u0938\u0941\u0935\u093f\u0927\u093e \u0938\u0947 \u092c\u091a\u0928\u0947 \u0915\u0947 \u0932\u093f\u090f \u091c\u0932\u094d\u0926 \u0938\u0947 \u091c\u0932\u094d\u0926 ' +
+    '\u0905\u092a\u0928\u093e \u092d\u0941\u0917\u0924\u093e\u0928 \u092a\u0942\u0930\u093e \u0915\u0930\u0947\u0902:\n' +
+    (upi ? '  > UPI: ' + upi + '\n' : '') +
+    '  > \u0911\u092b\u093c\u0932\u093e\u0907\u0928: \u0938\u094d\u0915\u0942\u0932 \u0915\u093e\u0930\u094d\u092f\u093e\u0932\u092f \u092e\u0947\u0902\n\n' +
+    '(\u0905\u0917\u0930 \u0906\u092a\u0915\u093e \u092d\u0941\u0917\u0924\u093e\u0928 \u0939\u094b \u091a\u0941\u0915\u093e \u0939\u0948, \u0924\u094b \u0915\u0943\u092a\u092f\u093e ' +
+    '\u0907\u0938\u0947 \u0905\u0928\u0926\u0947\u0916\u093e \u0915\u0930\u0947\u0902\u0964)\n\n' +
+    (s.phone ? '\u092a\u0942\u091b\u0924\u093e\u091b \u0915\u0947 \u0932\u093f\u090f \u0938\u0902\u092a\u0930\u094d\u0915 \u0915\u0930\u0947\u0902: ' + s.phone + '\n' : '') +
+    '\u0927\u0928\u094d\u092f\u0935\u093e\u0926!\n' + s.name;
 }
+
+/** "Nov-26" -> "November 2026", or the Hindi month name. */
+var MONTH_HI = ['\u091c\u0928\u0935\u0930\u0940', '\u092b\u093c\u0930\u0935\u0930\u0940', '\u092e\u093e\u0930\u094d\u091a',
+  '\u0905\u092a\u094d\u0930\u0948\u0932', '\u092e\u0908', '\u091c\u0942\u0928', '\u091c\u0941\u0932\u093e\u0908',
+  '\u0905\u0917\u0938\u094d\u0924', '\u0938\u093f\u0924\u0902\u092c\u0930', '\u0905\u0915\u094d\u091f\u0942\u092c\u0930',
+  '\u0928\u0935\u0902\u092c\u0930', '\u0926\u093f\u0938\u0902\u092c\u0930'];
+var MONTH_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+  'August', 'September', 'October', 'November', 'December'];
+
+function monthLong(code, hi) {
+  var m = /^([A-Za-z]{3})-(\d{2})$/.exec(String(code || '').trim());
+  if (!m) return String(code || '');
+  var i = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+    .indexOf(m[1].toLowerCase());
+  if (i < 0) return String(code);
+  return (hi ? MONTH_HI[i] : MONTH_EN[i]) + ' 20' + m[2];
+}
+
 
 
 function renderTxns(r) {
@@ -7084,69 +7231,133 @@ function printResults() {
   }).then(function (x) { if (x.isConfirmed) go(); });
 }
 
+/**
+ * Two-sided report cards, two children to a sheet.
+ *
+ * Each sheet of A4 is printed landscape and cut down the middle, which
+ * leaves two A5 portrait cards. The run is one page of covers followed by
+ * one page of marks, so printing double-sided gives each child a cover on
+ * the front and their own marks on the back.
+ *
+ * Which half of the back lines up with which half of the front depends on
+ * how the printer turns the paper over, and printers disagree. "Swap the
+ * back page" is there for when they come out crossed — one tick, reprint,
+ * done. Guessing on the school's behalf would waste a ream finding out.
+ */
 function buildResultSheets(r, list) {
   var s = ST.boot.school;
+  var swap = !!($('resSwapBack') || {}).checked;
   var pages = [];
+
   for (var i = 0; i < list.length; i += 2) {
+    var a = list[i], b = list[i + 1] || null;
+
+    /* front of the sheet: the two covers */
     pages.push('<div class="a4l">' +
-      resultCard_(r, list[i], s) +
-      (list[i + 1] ? resultCard_(r, list[i + 1], s)
-                   : '<div class="rc-half rc-blank"></div>') +
+      resultCover_(r, a, s) +
+      (b ? resultCover_(r, b, s) : '<div class="rc-half rc-blank"></div>') +
+      '</div>');
+
+    /* back of the sheet: the matching two mark sheets */
+    var left = swap ? b : a, right = swap ? a : b;
+    pages.push('<div class="a4l">' +
+      (left ? resultMarks_(r, left, s) : '<div class="rc-half rc-blank"></div>') +
+      (right ? resultMarks_(r, right, s) : '<div class="rc-half rc-blank"></div>') +
       '</div>');
   }
+
   openPrint(pages.join(''),
     '*' + s.name + '*\n' + T('res.title', 'Results') + ' — ' + r.cls +
-    (r.section ? '-' + r.section : '') + ' · ' + (r.exam || '') + '\n' + list.length + ' card(s)',
+    (r.section ? '-' + r.section : '') + ' · ' + (r.exam || '') + '\n' +
+    list.length + ' card(s), ' + pages.length + ' page(s)',
     '1050px');
 }
 
-function resultCard_(r, st, s) {
+/* --------------------------------------------------------- the cover */
+function resultCover_(r, st, s) {
+  var line = function (label, value) {
+    return '<div class="rcv-line"><span class="rcv-lbl">' + label + '</span>' +
+      '<span class="rcv-val">' + (value ? esc(value) : '') + '</span></div>';
+  };
+  return '<div class="rc-half rcv">' +
+    '<div class="rcv-school">' + esc(s.name.toUpperCase()) + '</div>' +
+    (s.tagline ? '<div class="rcv-tag">' + esc(s.tagline) + '</div>' : '') +
+    '<div class="rcv-addr">' + esc(s.address) + '</div>' +
+    (s.logo ? '<img class="rcv-logo" src="' + esc(s.logo) + '" crossorigin="anonymous">'
+            : '<div class="rcv-logo rcv-nologo"></div>') +
+    (s.motto ? '<div class="rcv-motto">' + esc(s.motto) + '</div>' : '') +
+    (s.since ? '<div class="rcv-since">SINCE ' + esc(s.since) + '</div>' : '') +
+    '<div class="rcv-title">' + esc(T('res.progress', 'PROGRESS REPORT CARD')) + '</div>' +
+    '<div class="rcv-session">' + esc(T('res.session', 'SESSION')) + ': ' + esc(r.session) + '</div>' +
+    '<div class="rcv-fields">' +
+      line(T('c.name', 'Name'), st.name) +
+      line(T('c.roll', 'Roll No'), st.roll) +
+      line(T('c.class', 'Class'), st.cls + (st.section ? '-' + st.section : '')) +
+    '</div>' +
+    '<div class="rcv-sign">' + esc(T('res.parentsign', "Parent's Specimen Signature")) +
+      ' <span class="rcv-dots"></span></div>' +
+    '<div class="rcv-foot"><span>' + esc(T('c.contact', 'Contact')) + ': ' + esc(s.phone) + '</span>' +
+      (s.email ? '<span>' + esc(T('c.email', 'Email')) + ': ' + esc(s.email) + '</span>' : '') +
+    '</div>' +
+  '</div>';
+}
+
+/* ---------------------------------------------------- the mark sheet */
+function resultMarks_(r, st, s) {
   var row = function (m) {
     var pct = m.marks === null ? null : (m.outOf ? m.marks / m.outOf * 100 : 0);
-    return '<tr><td>' + esc(m.subject) + '</td>' +
-      '<td style="text-align:center">' + m.outOf + '</td>' +
-      '<td style="text-align:center;font-weight:bold' +
-        (pct !== null && pct < 33 ? ';color:#c0352f' : '') + '">' +
-        (m.marks === null ? '—' : m.marks) + '</td>' +
-      '<td style="text-align:center">' + esc(m.grade || '—') + '</td></tr>';
+    return '<tr><td class="rcm-sub">' + esc(m.subject) + '</td>' +
+      '<td>' + m.outOf + '</td>' +
+      '<td class="rcm-got' + (pct !== null && pct < 33 ? ' rc-fail' : '') + '">' +
+        (m.marks === null ? '' : m.marks) + '</td>' +
+      '<td>' + esc(m.grade || '') + '</td></tr>';
   };
-  return '<div class="rc-half">' +
-    '<div class="rc-head">' +
-      (s.logo ? '<img class="rc-logo" src="' + esc(s.logo) + '" crossorigin="anonymous">' : '') +
-      '<div class="rc-hx">' +
-        '<div class="rc-name">' + esc(s.name) + '</div>' +
-        (s.tagline ? '<div class="rc-tag">' + esc(s.tagline) + '</div>' : '') +
-        '<div class="rc-addr">' + esc(s.address) + '</div>' +
-      '</div></div>' +
-    '<div class="rc-title">' + esc(T('res.card', 'REPORT CARD')) + ' &nbsp;·&nbsp; ' +
-      esc(r.exam || T('res.allexams', 'All exams')) + ' &nbsp;·&nbsp; ' + esc(r.session) + '</div>' +
-    '<table class="rc-bio"><tr>' +
+  /* a few blank ruled rows, so a subject added later can be written in —
+     capped so the signature line still fits on the page */
+  var spare = '';
+  for (var k = st.marks.length; k < 8; k++) {
+    spare += '<tr><td class="rcm-sub">&nbsp;</td><td></td><td></td><td></td></tr>';
+  }
+
+  return '<div class="rc-half rcm">' +
+    '<div class="rcm-head">' +
+      (s.logo ? '<img class="rcm-logo" src="' + esc(s.logo) + '" crossorigin="anonymous">' : '') +
+      '<div><div class="rcm-school">' + esc(s.name) + '</div>' +
+      '<div class="rcm-addr">' + esc(s.address) + '</div></div>' +
+    '</div>' +
+    '<div class="rcm-title">' + esc(T('res.marksheet', 'MARKS')) + ' · ' +
+      esc(r.exam || T('res.allexams', 'All exams')) + ' · ' + esc(r.session) + '</div>' +
+
+    '<table class="rcm-bio"><tr>' +
       '<td><b>' + T('c.name', 'Name') + ':</b> ' + esc(st.name) + '</td>' +
+      '<td><b>' + T('c.roll', 'Roll') + ':</b> ' + esc(st.roll || '-') + '</td></tr><tr>' +
+      '<td><b>' + T('res.father', 'Father') + ':</b> ' + esc(st.father || '-') + '</td>' +
       '<td><b>' + T('c.class', 'Class') + ':</b> ' + esc(st.cls) +
-        (st.section ? '-' + esc(st.section) : '') + '</td></tr><tr>' +
-      '<td><b>' + T('res.father', "Father") + ':</b> ' + esc(st.father || '-') + '</td>' +
-      '<td><b>' + T('c.roll', 'Roll') + ':</b> ' + esc(st.roll || '-') +
-        ' &nbsp; <b>ID:</b> ' + esc(st.id) + '</td></tr></table>' +
-    '<table class="rc-marks"><thead><tr>' +
+        (st.section ? '-' + esc(st.section) : '') + '</td></tr></table>' +
+
+    '<table class="rcm-marks"><thead><tr>' +
       '<th>' + T('mk.subject', 'Subject') + '</th><th>' + T('mk.outof', 'Out of') + '</th>' +
       '<th>' + T('mk.marks', 'Marks') + '</th><th>' + T('res.grade', 'Grade') + '</th>' +
-      '</tr></thead><tbody>' + st.marks.map(row).join('') +
-      '<tr class="rc-tot"><td><b>' + T('res.total', 'Total') + '</b></td>' +
-        '<td style="text-align:center"><b>' + st.total + '</b></td>' +
-        '<td style="text-align:center"><b>' + (st.subjectsDone ? st.obtained : '—') + '</b></td>' +
-        '<td style="text-align:center"><b>' + esc(st.grade || '—') + '</b></td></tr>' +
+      '</tr></thead><tbody>' + st.marks.map(row).join('') + spare +
+      '<tr class="rcm-tot"><td><b>' + T('res.total', 'Total') + '</b></td>' +
+        '<td><b>' + st.total + '</b></td>' +
+        '<td><b>' + (st.subjectsDone ? st.obtained : '') + '</b></td>' +
+        '<td><b>' + esc(st.grade || '') + '</b></td></tr>' +
       '</tbody></table>' +
-    '<div class="rc-sum">' +
+
+    '<div class="rcm-sum">' +
       '<div><span>' + T('res.pct', 'Percentage') + '</span><b>' +
         (st.subjectsDone ? st.percent + '%' : '—') + '</b></div>' +
       '<div><span>' + T('res.rank', 'Rank') + '</span><b>' + (st.rank || '—') + '</b></div>' +
       '<div><span>' + T('res.result', 'Result') + '</span><b class="' +
         (st.result === 'FAIL' ? 'rc-fail' : 'rc-pass') + '">' + (st.result || '—') + '</b></div>' +
     '</div>' +
-    (st.remark ? '<div class="rc-remark"><b>' + T('res.remark', 'Remark') + ':</b> ' + esc(st.remark) + '</div>' : '') +
-    '<div class="rc-sign"><span>' + T('res.classteacher', 'Class Teacher') + '</span>' +
+    '<div class="rcm-remark"><b>' + T('res.remark', 'Remark') + ':</b> ' +
+      esc(st.remark || '') + '</div>' +
+    '<div class="rcm-sign"><span>' + T('res.classteacher', 'Class Teacher') + '</span>' +
+      '<span>' + T('res.parentsign2', 'Parent') + '</span>' +
       '<span>' + T('res.principal', 'Principal') + '</span></div>' +
-    '</div>';
+  '</div>';
 }
 
 </script>
