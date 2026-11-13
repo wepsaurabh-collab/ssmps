@@ -527,65 +527,116 @@ code{background:#f1ece4;border-radius:8px;padding:3px 8px;font-size:12.5px;word-
 
 /* ------------------------------------------------- result cards (A4) */
 /* One landscape A4 per page, split down the middle: two report cards the
-   school cuts apart, the same way they already do it by hand. */
+   school cuts apart, the same way they already do it by hand.
+   Black ink only, by request. No tint, no colour, no grey wash — a laser
+   printer turns a soft grey into muddy banding, so every bit of weight on
+   these two pages is a rule, a border, or bold type. */
 .a4l{width:297mm;min-height:209mm;display:flex;gap:0;background:#fff;page-break-after:always;
   box-sizing:border-box;overflow:hidden;margin:0 auto 6mm;border:1px solid #ddd}
 .a4l:last-child{page-break-after:auto}
-.rc-half{width:148.5mm;padding:7mm 7mm 6mm;box-sizing:border-box;
+.rc-half{width:148.5mm;padding:6mm;box-sizing:border-box;
   border-right:1px dashed #9a9a9a;display:flex;flex-direction:column;
   font-family:"Segoe UI",Arial,sans-serif;color:#000;background:#fff}
 .rc-half:last-child{border-right:0}
 .rc-blank{background:#fff}
-.rc-pass{color:#0e7a45}
-.rc-fail{color:#c0352f}
 
 /* ---- the cover: what the family sees first, so it is mostly air ---- */
-.rcv{align-items:center;text-align:center;padding:10mm 9mm 7mm}
-.rcv-school{font-size:19pt;font-weight:900;line-height:1.05;letter-spacing:-.01em}
-.rcv-tag{font-size:8.5pt;font-weight:700;margin-top:2.5mm;line-height:1.3}
-.rcv-addr{font-size:8.5pt;font-weight:600;margin-top:1.5mm;line-height:1.35}
-.rcv-logo{width:36mm;height:36mm;object-fit:contain;margin:5mm 0 3mm}
-.rcv-nologo{border:1px dashed #bbb;border-radius:3mm}
-.rcv-motto{font-size:11pt;font-weight:700;line-height:1.2}
-.rcv-since{font-size:8pt;font-weight:700;letter-spacing:.22em;margin-top:1.5mm}
-.rcv-title{font-size:21pt;font-weight:900;line-height:1.06;margin:5mm 0 2mm}
-.rcv-session{font-size:10pt;font-weight:700;letter-spacing:.02em}
-.rcv-fields{width:100%;margin-top:7mm;text-align:left}
-.rcv-line{display:flex;align-items:flex-end;gap:3mm;margin-bottom:4.5mm}
-.rcv-lbl{font-size:11pt;font-weight:700;min-width:24mm;flex:0 0 auto}
-.rcv-val{flex:1;font-size:11pt;border-bottom:1.5px dotted #000;min-height:6mm;padding:0 1mm 1mm}
-.rcv-sign{width:100%;text-align:left;font-size:10.5pt;font-weight:700;margin-top:4mm;
+.rcv{padding:5mm}
+/* double rule, the way a certificate is bordered: outer line, gap, inner line */
+.rcv-frame{flex:1;display:flex;flex-direction:column;align-items:center;text-align:center;
+  position:relative;border:2.5px solid #000;outline:1px solid #000;outline-offset:1.6mm;
+  padding:7mm 7mm 5mm}
+/* small corner brackets inside the frame, printed as plain rules */
+.rcv-corner{position:absolute;width:7mm;height:7mm}
+.rcv-corner.tl{top:2mm;left:2mm;border-top:1.2px solid #000;border-left:1.2px solid #000}
+.rcv-corner.tr{top:2mm;right:2mm;border-top:1.2px solid #000;border-right:1.2px solid #000}
+.rcv-corner.bl{bottom:2mm;left:2mm;border-bottom:1.2px solid #000;border-left:1.2px solid #000}
+.rcv-corner.br{bottom:2mm;right:2mm;border-bottom:1.2px solid #000;border-right:1.2px solid #000}
+.rcv-school{font-size:17pt;font-weight:900;line-height:1.05;letter-spacing:-.01em}
+.rcv-tag{font-size:8pt;font-weight:700;margin-top:1.8mm;line-height:1.3}
+.rcv-addr{font-size:8pt;font-weight:600;margin-top:1.2mm;line-height:1.3}
+.rcv-rule{width:52mm;border-top:1.2px solid #000;margin:2.5mm 0 0;
+  position:relative;height:2mm}
+/* a small diamond sitting on the rule, drawn with a rotated square */
+.rcv-rule::after{content:"";position:absolute;left:50%;top:-1.3mm;width:2.6mm;height:2.6mm;
+  margin-left:-1.3mm;background:#000;transform:rotate(45deg)}
+.rcv-logo{width:19mm;height:19mm;object-fit:contain;margin:1.6mm 0 1.2mm}
+.rcv-nologo{border:1px dashed #bbb;border-radius:2mm}
+.rcv-motto{font-size:10pt;font-weight:700;line-height:1.2;font-style:italic}
+.rcv-since{font-size:7.5pt;font-weight:700;letter-spacing:.22em;margin-top:1mm}
+.rcv-title{font-size:17pt;font-weight:900;line-height:1.06;margin:3mm 0 1.5mm;
+  letter-spacing:.02em}
+.rcv-session{font-size:9.5pt;font-weight:700;letter-spacing:.02em;
+  border:1.2px solid #000;padding:1mm 4mm}
+/* particulars sit beside the photo box, the way a school form is laid out */
+.rcv-body{display:flex;align-items:flex-start;gap:4mm;width:100%;margin-top:4mm;text-align:left}
+.rcv-photo{flex:0 0 26mm;height:33mm;border:1.2px solid #000;display:flex;
+  align-items:center;justify-content:center;padding:2mm;box-sizing:border-box}
+.rcv-photo span{text-align:center;font-size:7.5pt;font-weight:700;line-height:1.3;color:#555}
+.rcv-fields{flex:1;min-width:0}
+.rcv-line{display:flex;align-items:flex-end;gap:2.5mm;margin-bottom:2.6mm}
+.rcv-lbl{font-size:9.5pt;font-weight:700;min-width:25mm;flex:0 0 auto}
+.rcv-val{flex:1;min-width:0;font-size:9.5pt;border-bottom:1.2px dotted #000;
+  min-height:5mm;padding:0 1mm .8mm;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.rcv-sign{width:100%;text-align:left;font-size:9pt;font-weight:700;margin-top:3.5mm;
   display:flex;align-items:flex-end;gap:3mm}
-.rcv-dots{flex:1;border-bottom:1.5px dotted #000;min-height:5mm}
-.rcv-foot{margin-top:auto;padding-top:5mm;width:100%;display:flex;justify-content:space-between;
-  gap:3mm;font-size:8pt;font-weight:700;flex-wrap:wrap}
+.rcv-dots{flex:1;border-bottom:1.2px dotted #000;min-height:4.5mm}
+.rcv-note{width:100%;margin-top:4mm;border:1.2px solid #000;padding:2.2mm 3mm;text-align:left}
+.rcv-note b{display:block;font-size:8pt;font-weight:800;text-transform:uppercase;
+  letter-spacing:.06em;margin-bottom:1mm}
+.rcv-note ol{margin:0;padding-left:5mm;font-size:7.5pt;line-height:1.45}
+.rcv-note li{margin-bottom:.8mm}
+.rcv-note li:last-child{margin-bottom:0}
+.rcv-foot{margin-top:auto;padding-top:4mm;width:100%;display:flex;justify-content:center;
+  gap:4mm;font-size:7.5pt;font-weight:700;flex-wrap:wrap;
+  border-top:1.2px solid #000;margin-bottom:0}
 
 /* ---- the back: the marks, ruled like an ankpatra ---- */
-.rcm{padding:8mm 8mm 6mm}
-.rcm-head{display:flex;align-items:center;gap:3.5mm;border-bottom:2px solid #000;padding-bottom:2mm}
-.rcm-logo{width:14mm;height:14mm;object-fit:contain;flex:0 0 auto}
+.rcm{padding:6mm 6mm 5mm}
+.rcm-head{display:flex;align-items:center;gap:3mm;border-bottom:2px solid #000;padding-bottom:1.6mm}
+.rcm-logo{width:12mm;height:12mm;object-fit:contain;flex:0 0 auto}
 .rcm-head > div{flex:1;min-width:0;text-align:center}
-.rcm-school{font-size:13pt;font-weight:900;line-height:1.1}
-.rcm-addr{font-size:7.5pt;margin-top:.8mm}
-.rcm-title{text-align:center;font-size:10pt;font-weight:800;letter-spacing:.05em;
-  margin:2.5mm 0;padding:1.4mm 0;border:1.5px solid #000}
-.rcm-bio{width:100%;border-collapse:collapse;font-size:9.5pt;margin-bottom:2.5mm}
-.rcm-bio td{padding:1.4mm 0;border-bottom:1px dotted #999}
-.rcm-marks{width:100%;border-collapse:collapse;font-size:9.5pt;border:1.5px solid #000}
-.rcm-marks th{border:1px solid #000;padding:1.6mm 2mm;font-size:8pt;font-weight:800;
-  text-transform:uppercase;letter-spacing:.03em;background:#e9e9e9}
-.rcm-marks td{border:1px solid #000;padding:1.3mm 2mm;text-align:center;height:5.6mm}
+.rcm-school{font-size:12pt;font-weight:900;line-height:1.1}
+.rcm-addr{font-size:7pt;margin-top:.6mm}
+.rcm-title{text-align:center;font-size:8.5pt;font-weight:800;letter-spacing:.05em;
+  margin:1.6mm 0;padding:.9mm 0;border:1.2px solid #000}
+.rcm-bio{width:100%;border-collapse:collapse;font-size:8pt;margin-bottom:1.6mm}
+.rcm-bio td{padding:.7mm 0;border-bottom:1px dotted #999;width:50%}
+.rcm-marks{width:100%;border-collapse:collapse;font-size:8pt;border:1.5px solid #000}
+.rcm-marks th{border:1px solid #000;padding:.8mm 1.5mm;font-size:7pt;font-weight:800;
+  text-transform:uppercase;letter-spacing:.03em;background:#000;color:#fff}
+.rcm-marks td{border:1px solid #000;padding:.5mm 1.5mm;text-align:center;height:4.4mm;
+  line-height:1.25}
 .rcm-marks td.rcm-sub{text-align:left;font-weight:600}
 .rcm-marks td.rcm-got{font-weight:800}
-.rcm-marks .rcm-tot td{border-top:1.5px solid #000;background:#e9e9e9;font-weight:800}
-.rcm-sum{display:flex;gap:3mm;margin-top:3mm}
-.rcm-sum > div{flex:1;border:1.5px solid #000;padding:2mm;text-align:center}
-.rcm-sum span{display:block;font-size:7.5pt;text-transform:uppercase;letter-spacing:.04em}
-.rcm-sum b{font-size:13pt;display:block;margin-top:.6mm}
-.rcm-remark{margin-top:2.5mm;font-size:9pt;border:1px solid #000;padding:2mm;min-height:9mm}
-.rcm-sign{margin-top:auto;padding-top:8mm;display:flex;justify-content:space-between;
-  font-size:8.5pt;font-weight:700;gap:3mm}
-.rcm-sign span{border-top:1px solid #000;padding-top:1mm;flex:1;text-align:center}
+.rcm-marks td.rcm-note{font-size:7.5pt}
+/* a failing subject, marked without colour: underline and a star */
+.rcm-marks td.rcm-low{text-decoration:underline;text-underline-offset:1px}
+.rcm-star{font-weight:700;margin-left:auto}
+.rcm-marks .rcm-tot td{border-top:2px double #000;font-weight:800}
+.rcm-sum{display:flex;gap:2mm;margin-top:2mm}
+.rcm-sum > div{flex:1;min-width:0;border:1.2px solid #000;padding:1mm;text-align:center}
+.rcm-sum span{display:block;font-size:6.5pt;text-transform:uppercase;letter-spacing:.04em}
+.rcm-sum b{font-size:10.5pt;display:block;margin-top:.3mm}
+/* attendance and conduct share one row, so the page keeps its ruled look */
+.rcm-two{display:flex;gap:2mm;margin-top:2mm;align-items:flex-start}
+.rcm-two table{flex:1;min-width:0;border-collapse:collapse;font-size:7.5pt;border:1.2px solid #000}
+.rcm-two th{background:#000;color:#fff;font-size:6.8pt;font-weight:800;text-transform:uppercase;
+  letter-spacing:.03em;padding:.7mm;border:1px solid #000}
+.rcm-two td{border:1px solid #000;padding:.45mm 1.5mm;height:3.9mm;line-height:1.25}
+.rcm-att td:last-child{text-align:center;width:16mm;font-weight:700}
+.rcm-conduct td.rcm-box{width:14mm}
+.rcm-scale{margin-top:1.6mm;font-size:7pt;border:1.2px solid #000;padding:1.1mm;
+  display:flex;flex-wrap:wrap;gap:0 3mm;align-items:baseline}
+.rcm-scale span{white-space:nowrap}
+.rcm-remark{margin-top:1.6mm;font-size:8pt;border:1.2px solid #000;padding:1.3mm;min-height:11mm}
+.rcm-promote{margin-top:2.5mm;font-size:8.5pt;font-weight:700;display:flex;align-items:flex-end;gap:2mm}
+.rcm-promote > span:first-child,.rcm-promote > span:nth-child(3){flex:0 0 auto}
+.rcm-dots.short{flex:0 0 26mm}
+.rcm-dots{flex:1;border-bottom:1.2px dotted #000;min-height:4.5mm}
+.rcm-sign{margin-top:auto;padding-top:5mm;display:flex;justify-content:space-between;
+  font-size:8pt;font-weight:700;gap:3mm}
+.rcm-sign span{border-top:1px solid #000;padding-top:1mm;flex:1;min-width:0;text-align:center}
 
 /* marks entry: a number box in a table row is not a full-width field */
 .mk-in{max-width:120px}
@@ -671,178 +722,9 @@ code{background:#f1ece4;border-radius:8px;padding:3px 8px;font-size:12.5px;word-
   .cb-row,.cb-head,.cb-foot,.cb-close{padding-left:14px;padding-right:14px}
 }
 </style>
-<script>window.SSMPS_ENDPOINT = "https://script.google.com/macros/s/AKfycbxnwHWnYomwUIXf3VJGPU9MFweClyZd3SlOxKyw2BLdVe3aJujTkawEgFRxGiVvALiT/exec";</script>
-<script>
-/* =====================================================================
- * Transport.
- *
- * Inside Apps Script, Google injects google.script.run and this file does
- * nothing. On a page hosted anywhere else — GitHub Pages, a school's own
- * domain — there is no such object, so this builds one with the same shape:
- *
- *     google.script.run
- *       .withSuccessHandler(fn)
- *       .withFailureHandler(fn)
- *       .apiWhatever(a, b, c)
- *
- * Nothing above this line in the app knows or cares which one it got.
- *
- * The call is a POST with Content-Type text/plain. That combination is a
- * CORS "simple request", so the browser sends it straight through without a
- * preflight — which matters because Apps Script cannot answer a preflight.
- * If a browser or network blocks it anyway, small calls retry over JSONP.
- * ===================================================================== */
-(function () {
-  if (window.google && window.google.script && window.google.script.run) return;
-
-  var KEY = 'ssmps_endpoint';
-
-  function endpoint() {
-    try { return localStorage.getItem(KEY) || (window.SSMPS_ENDPOINT || ''); }
-    catch (e) { return window.SSMPS_ENDPOINT || ''; }
-  }
-  function setEndpoint(url) {
-    try { localStorage.setItem(KEY, url); } catch (e) {}
-    window.SSMPS_ENDPOINT = url;
-  }
-  window.ssmpsEndpoint = endpoint;
-  window.ssmpsSetEndpoint = setEndpoint;
-
-  /* ---------------------------------------------------------- JSONP */
-  var jsonpN = 0;
-  function jsonp(fn, args) {
-    return new Promise(function (ok, no) {
-      var name = '__ssmps_cb_' + (++jsonpN);
-      var url = endpoint() + '?fn=' + encodeURIComponent(fn) +
-        '&args=' + encodeURIComponent(JSON.stringify(args || [])) +
-        '&callback=' + name;
-      if (url.length > 7000) return no(new Error('REQUEST_TOO_BIG'));
-
-      var tag = document.createElement('script');
-      var done = false;
-      var timer = setTimeout(function () {
-        if (!done) { cleanup(); no(new Error('NETWORK')); }
-      }, 60000);
-
-      function cleanup() {
-        done = true;
-        clearTimeout(timer);
-        try { delete window[name]; } catch (e) { window[name] = undefined; }
-        if (tag.parentNode) tag.parentNode.removeChild(tag);
-      }
-      window[name] = function (res) { cleanup(); ok(res); };
-      tag.onerror = function () { if (!done) { cleanup(); no(new Error('NETWORK')); } };
-      tag.src = url;
-      document.head.appendChild(tag);
-    });
-  }
-
-  /* ----------------------------------------------------------- POST */
-  function post(fn, args) {
-    return fetch(endpoint(), {
-      method: 'POST',
-      /* text/plain keeps this a simple request; Apps Script reads the body
-         the same way whatever the header says it is */
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ fn: fn, args: args || [] }),
-      redirect: 'follow'
-    }).then(function (r) {
-      if (!r.ok) throw new Error('HTTP_' + r.status);
-      return r.json();
-    });
-  }
-
-  function call(fn, args) {
-    if (!endpoint()) return Promise.reject(new Error('NO_ENDPOINT'));
-    return post(fn, args).catch(function (e) {
-      /* A blocked POST looks like a thrown TypeError, not an HTTP status.
-         Retry small calls over JSONP; a photo upload cannot fit in a URL
-         and is allowed to fail loudly. */
-      if (/HTTP_/.test(e.message)) throw e;
-      return jsonp(fn, args);
-    }).then(function (res) {
-      if (!res || typeof res !== 'object') throw new Error('BAD_REPLY');
-      if (res.ok === false) throw new Error(res.error || 'ERROR');
-      return res.out;
-    });
-  }
-
-  /* ------------------------------------- the google.script.run shape */
-  function runner(onOk, onErr) {
-    var handler = {
-      get: function (_t, name) {
-        if (name === 'withSuccessHandler') {
-          return function (f) { return runner(f, onErr); };
-        }
-        if (name === 'withFailureHandler') {
-          return function (f) { return runner(onOk, f); };
-        }
-        if (typeof name !== 'string') return undefined;
-        return function () {
-          var args = Array.prototype.slice.call(arguments);
-          call(name, args)
-            .then(function (out) { if (onOk) onOk(out); })
-            .catch(function (err) { if (onErr) onErr({ message: err.message || String(err) }); });
-        };
-      }
-    };
-    return new Proxy({}, handler);
-  }
-
-  window.google = { script: { run: runner(null, null), host: { close: function () {} } } };
-
-  /* --------------------------------------------- first run on a host
-   * Nothing works until the page knows which Apps Script deployment to
-   * talk to. Ask once, plainly, and remember it.
-   */
-  window.addEventListener('DOMContentLoaded', function () {
-    if (endpoint()) return;
-    var box = document.createElement('div');
-    box.id = 'endpointSetup';
-    box.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#0e1f36;color:#fff;' +
-      'display:flex;align-items:center;justify-content:center;padding:24px;' +
-      'font-family:Inter,Segoe UI,system-ui,sans-serif';
-    box.innerHTML =
-      '<div style="background:#fff;color:#152338;border-radius:22px;padding:28px;max-width:520px;width:100%">' +
-      '<h2 style="margin:0 0 6px;font-size:20px">One-time setup</h2>' +
-      '<p style="margin:0 0 18px;font-size:14px;color:#4a5a70;line-height:1.6">' +
-      'Paste the web app link from your Apps Script project. In Apps Script: ' +
-      '<b>Deploy &rarr; Manage deployments</b>, copy the <b>Web app URL</b>. ' +
-      'It ends in <code>/exec</code>.</p>' +
-      '<input id="endpointInput" placeholder="https://script.google.com/macros/s/.../exec" ' +
-      'style="width:100%;padding:12px 14px;border:1.5px solid #e7e0d6;border-radius:11px;' +
-      'font:inherit;font-size:14px;box-sizing:border-box">' +
-      '<p id="endpointErr" style="color:#c0352f;font-size:13px;margin:8px 0 0;display:none"></p>' +
-      '<button id="endpointSave" style="margin-top:16px;width:100%;padding:13px;border:0;' +
-      'border-radius:999px;background:#2b6fd4;color:#fff;font:inherit;font-size:15px;' +
-      'font-weight:650;cursor:pointer">Save and continue</button>' +
-      '<p style="margin:14px 0 0;font-size:12px;color:#8294aa;line-height:1.5">' +
-      'Stored on this device only. To change it later, open Settings in the app.</p>' +
-      '</div>';
-    document.body.appendChild(box);
-
-    var input = box.querySelector('#endpointInput');
-    var err = box.querySelector('#endpointErr');
-    box.querySelector('#endpointSave').onclick = function () {
-      var v = String(input.value || '').trim();
-      if (!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(v)) {
-        err.style.display = 'block';
-        err.textContent = 'That does not look like a web app URL. It should start with ' +
-          'https://script.google.com/macros/s/ and end with /exec';
-        return;
-      }
-      setEndpoint(v);
-      location.reload();
-    };
-    input.addEventListener('keydown', function (ev) {
-      if (ev.key === 'Enter') box.querySelector('#endpointSave').click();
-    });
-  });
-})();
-</script>
 </head>
 <body>
-<script>window.START_ROLE = '' + (new URLSearchParams(location.search).get('p') || '') + '';</script>
+<script>window.START_ROLE = '<?= startRole ?>';</script>
 
 <!-- ============================================================ LOGIN -->
 <div id="login">
@@ -2645,8 +2527,31 @@ var HI = {
   'res.father': 'पिता',
   'res.classteacher': 'कक्षा अध्यापक',
   'res.principal': 'प्रधानाचार्य',
-  'res.progress': 'प्रगति रिपोर्ट कार्ड',
+  'res.cardtitle': 'प्रगति रिपोर्ट कार्ड',
   'res.session': 'सत्र',
+  'res.photo': 'फोटो लगाएँ',
+  'res.mother': 'माता',
+  'res.admno': 'प्रवेश क्रमांक',
+  'res.max': 'पूर्णांक',
+  'res.best': 'कक्षा में सर्वाधिक',
+  'res.below': 'पास अंक से कम',
+  'res.attendance': 'उपस्थिति',
+  'res.held': 'कुल दिन',
+  'res.present': 'उपस्थित दिन',
+  'res.conduct': 'आचरण एवं गतिविधियाँ',
+  'res.c1': 'अनुशासन',
+  'res.c2': 'समय की पाबंदी',
+  'res.c3': 'स्वच्छता',
+  'res.c4': 'कक्षा में भागीदारी',
+  'res.c5': 'खेल एवं गतिविधियाँ',
+  'res.c6': 'दूसरों के साथ व्यवहार',
+  'res.scale': 'ग्रेड तालिका',
+  'res.issued': 'जारी करने की तिथि',
+  'res.note.h': 'अभिभावकों के लिए',
+  'res.note1': 'यह कार्ड सँभालकर रखिए और अगली परीक्षा के समय साथ लाइए।',
+  'res.note2': 'पीछे की ओर उपस्थिति और कक्षा अध्यापक की टिप्पणी अवश्य देखिए।',
+  'res.note3': 'अंकों के बारे में कुछ पूछना हो तो कक्षा अध्यापक से मिलिए।',
+  'res.promoted': 'अगली कक्षा',
   'res.parentsign': 'अभिभावक के हस्ताक्षर',
   'res.parentsign2': 'अभिभावक',
   'res.marksheet': 'अंकपत्र',
@@ -7274,50 +7179,104 @@ function buildResultSheets(r, list) {
 }
 
 /* --------------------------------------------------------- the cover */
+/*
+ * Black ink only — the school prints on a laser printer, and a grey wash
+ * that looks soft on screen comes out as muddy banding on paper. Every
+ * weight here is a rule, a border or bold type.
+ */
 function resultCover_(r, st, s) {
-  var line = function (label, value) {
+  var field = function (label, value) {
     return '<div class="rcv-line"><span class="rcv-lbl">' + label + '</span>' +
       '<span class="rcv-val">' + (value ? esc(value) : '') + '</span></div>';
   };
   return '<div class="rc-half rcv">' +
-    '<div class="rcv-school">' + esc(s.name.toUpperCase()) + '</div>' +
-    (s.tagline ? '<div class="rcv-tag">' + esc(s.tagline) + '</div>' : '') +
-    '<div class="rcv-addr">' + esc(s.address) + '</div>' +
-    (s.logo ? '<img class="rcv-logo" src="' + esc(s.logo) + '" crossorigin="anonymous">'
-            : '<div class="rcv-logo rcv-nologo"></div>') +
-    (s.motto ? '<div class="rcv-motto">' + esc(s.motto) + '</div>' : '') +
-    (s.since ? '<div class="rcv-since">SINCE ' + esc(s.since) + '</div>' : '') +
-    '<div class="rcv-title">' + esc(T('res.progress', 'PROGRESS REPORT CARD')) + '</div>' +
-    '<div class="rcv-session">' + esc(T('res.session', 'SESSION')) + ': ' + esc(r.session) + '</div>' +
-    '<div class="rcv-fields">' +
-      line(T('c.name', 'Name'), st.name) +
-      line(T('c.roll', 'Roll No'), st.roll) +
-      line(T('c.class', 'Class'), st.cls + (st.section ? '-' + st.section : '')) +
-    '</div>' +
-    '<div class="rcv-sign">' + esc(T('res.parentsign', "Parent's Specimen Signature")) +
-      ' <span class="rcv-dots"></span></div>' +
-    '<div class="rcv-foot"><span>' + esc(T('c.contact', 'Contact')) + ': ' + esc(s.phone) + '</span>' +
-      (s.email ? '<span>' + esc(T('c.email', 'Email')) + ': ' + esc(s.email) + '</span>' : '') +
+    '<div class="rcv-frame">' +
+      '<span class="rcv-corner tl"></span><span class="rcv-corner tr"></span>' +
+      '<span class="rcv-corner bl"></span><span class="rcv-corner br"></span>' +
+
+      '<div class="rcv-school">' + esc(s.name.toUpperCase()) + '</div>' +
+      (s.tagline ? '<div class="rcv-tag">' + esc(s.tagline) + '</div>' : '') +
+      '<div class="rcv-addr">' + esc(s.address) + '</div>' +
+      '<div class="rcv-rule"></div>' +
+
+      (s.logo ? '<img class="rcv-logo" src="' + esc(s.logo) + '" crossorigin="anonymous">'
+              : '<div class="rcv-logo rcv-nologo"></div>') +
+      (s.motto ? '<div class="rcv-motto">' + esc(s.motto) + '</div>' : '') +
+      (s.since ? '<div class="rcv-since">SINCE ' + esc(s.since) + '</div>' : '') +
+
+      '<div class="rcv-title">' + esc(T('res.cardtitle', 'PROGRESS REPORT CARD')) + '</div>' +
+      '<div class="rcv-session">' + esc(T('res.session', 'SESSION')) + ' : ' + esc(r.session) +
+        (r.exam ? '  ·  ' + esc(r.exam) : '') + '</div>' +
+
+      '<div class="rcv-body">' +
+        '<div class="rcv-photo"><span>' + esc(T('res.photo', 'Affix Photo')) + '</span></div>' +
+        '<div class="rcv-fields">' +
+          field(T('c.name', 'Name'), st.name) +
+          field(T('res.father', "Father's Name"), st.father) +
+          field(T('res.mother', "Mother's Name"), st.mother) +
+          field(T('c.class', 'Class'), st.cls + (st.section ? ' - ' + st.section : '')) +
+          field(T('c.roll', 'Roll No'), st.roll) +
+          field(T('res.admno', 'Admission No'), st.id) +
+          field(T('c.dob', 'Date of Birth'), st.dob) +
+        '</div>' +
+      '</div>' +
+
+      '<div class="rcv-sign">' + esc(T('res.parentsign', "Parent's Specimen Signature")) +
+        '<span class="rcv-dots"></span></div>' +
+
+      '<div class="rcv-note"><b>' + T('res.note.h', 'For parents') + '</b>' +
+        '<ol><li>' + T('res.note1',
+          'Please keep this card safely and bring it back at the next examination.') +
+        '</li><li>' + T('res.note2',
+          'Do look at the attendance and the class teacher\u2019s remark on the back.') +
+        '</li><li>' + T('res.note3',
+          'For anything you wish to ask about the marks, please meet the class teacher.') +
+        '</li></ol></div>' +
+
+      '<div class="rcv-foot">' +
+        '<span>' + esc(T('c.contact', 'Contact')) + ': ' + esc(s.phone) + '</span>' +
+        (s.email ? '<span>' + esc(s.email) + '</span>' : '') +
+        (s.website ? '<span>' + esc(s.website) + '</span>' : '') +
+      '</div>' +
     '</div>' +
   '</div>';
 }
 
 /* ---------------------------------------------------- the mark sheet */
 function resultMarks_(r, st, s) {
+  var highs = r.subjectHigh || {};
+  var anyLow = false;
   var row = function (m) {
     var pct = m.marks === null ? null : (m.outOf ? m.marks / m.outOf * 100 : 0);
+    var low = pct !== null && pct < (r.passMark || 33);
+    if (low) anyLow = true;
+    var best = highs[m.subject.toLowerCase()];
     return '<tr><td class="rcm-sub">' + esc(m.subject) + '</td>' +
       '<td>' + m.outOf + '</td>' +
-      '<td class="rcm-got' + (pct !== null && pct < 33 ? ' rc-fail' : '') + '">' +
-        (m.marks === null ? '' : m.marks) + '</td>' +
-      '<td>' + esc(m.grade || '') + '</td></tr>';
+      '<td class="rcm-got' + (low ? ' rcm-low' : '') + '">' +
+        (m.marks === null ? '' : m.marks + (low ? '*' : '')) + '</td>' +
+      '<td>' + esc(m.grade || '') + '</td>' +
+      '<td class="rcm-note">' + (best === undefined ? '' : best) + '</td></tr>';
   };
-  /* a few blank ruled rows, so a subject added later can be written in —
-     capped so the signature line still fits on the page */
+  /* blank ruled rows, so a subject added later can be written in by hand */
   var spare = '';
   for (var k = st.marks.length; k < 8; k++) {
-    spare += '<tr><td class="rcm-sub">&nbsp;</td><td></td><td></td><td></td></tr>';
+    spare += '<tr><td class="rcm-sub">&nbsp;</td><td></td><td></td><td></td><td></td></tr>';
   }
+
+  var att = st.attendance || { present: 0, held: 0, percent: 0 };
+
+  /* The school fills these in by hand. Inventing a grade for a child's
+     handwriting from marks data would be a lie printed on a report card. */
+  var conduct = [
+    T('res.c1', 'Discipline'), T('res.c2', 'Punctuality'),
+    T('res.c3', 'Neatness'), T('res.c4', 'Class participation'),
+    T('res.c5', 'Games &amp; activities'), T('res.c6', 'Behaviour with others')
+  ];
+
+  var scale = (r.gradeScale || []).map(function (g) {
+    return '<span><b>' + esc(g.grade) + '</b> ' + g.from + '–' + g.to + '</span>';
+  }).join('');
 
   return '<div class="rc-half rcm">' +
     '<div class="rcm-head">' +
@@ -7325,35 +7284,66 @@ function resultMarks_(r, st, s) {
       '<div><div class="rcm-school">' + esc(s.name) + '</div>' +
       '<div class="rcm-addr">' + esc(s.address) + '</div></div>' +
     '</div>' +
-    '<div class="rcm-title">' + esc(T('res.marksheet', 'MARKS')) + ' · ' +
-      esc(r.exam || T('res.allexams', 'All exams')) + ' · ' + esc(r.session) + '</div>' +
+    '<div class="rcm-title">' + esc(T('res.marksheet', 'MARKS')) + '  ·  ' +
+      esc(r.exam || T('res.allexams', 'All exams')) + '  ·  ' + esc(r.session) + '</div>' +
 
     '<table class="rcm-bio"><tr>' +
       '<td><b>' + T('c.name', 'Name') + ':</b> ' + esc(st.name) + '</td>' +
       '<td><b>' + T('c.roll', 'Roll') + ':</b> ' + esc(st.roll || '-') + '</td></tr><tr>' +
       '<td><b>' + T('res.father', 'Father') + ':</b> ' + esc(st.father || '-') + '</td>' +
       '<td><b>' + T('c.class', 'Class') + ':</b> ' + esc(st.cls) +
-        (st.section ? '-' + esc(st.section) : '') + '</td></tr></table>' +
+        (st.section ? ' - ' + esc(st.section) : '') + '</td></tr><tr>' +
+      '<td><b>' + T('res.admno', 'Adm No') + ':</b> ' + esc(st.id) + '</td>' +
+      '<td><b>' + T('c.dob', 'D.O.B') + ':</b> ' + esc(st.dob || '-') + '</td></tr></table>' +
 
     '<table class="rcm-marks"><thead><tr>' +
-      '<th>' + T('mk.subject', 'Subject') + '</th><th>' + T('mk.outof', 'Out of') + '</th>' +
-      '<th>' + T('mk.marks', 'Marks') + '</th><th>' + T('res.grade', 'Grade') + '</th>' +
+      '<th>' + T('mk.subject', 'Subject') + '</th><th>' + T('res.max', 'Max') + '</th>' +
+      '<th>' + T('mk.marks', 'Obtained') + '</th><th>' + T('res.grade', 'Grade') + '</th>' +
+      '<th>' + T('res.best', 'Class best') + '</th>' +
       '</tr></thead><tbody>' + st.marks.map(row).join('') + spare +
-      '<tr class="rcm-tot"><td><b>' + T('res.total', 'Total') + '</b></td>' +
+      '<tr class="rcm-tot"><td><b>' + T('res.total', 'TOTAL') + '</b></td>' +
         '<td><b>' + st.total + '</b></td>' +
         '<td><b>' + (st.subjectsDone ? st.obtained : '') + '</b></td>' +
-        '<td><b>' + esc(st.grade || '') + '</b></td></tr>' +
+        '<td><b>' + esc(st.grade || '') + '</b></td><td></td></tr>' +
       '</tbody></table>' +
 
     '<div class="rcm-sum">' +
       '<div><span>' + T('res.pct', 'Percentage') + '</span><b>' +
         (st.subjectsDone ? st.percent + '%' : '—') + '</b></div>' +
+      '<div><span>' + T('res.grade', 'Grade') + '</span><b>' + esc(st.grade || '—') + '</b></div>' +
       '<div><span>' + T('res.rank', 'Rank') + '</span><b>' + (st.rank || '—') + '</b></div>' +
-      '<div><span>' + T('res.result', 'Result') + '</span><b class="' +
-        (st.result === 'FAIL' ? 'rc-fail' : 'rc-pass') + '">' + (st.result || '—') + '</b></div>' +
+      '<div><span>' + T('res.result', 'Result') + '</span><b>' + (st.result || '—') + '</b></div>' +
     '</div>' +
-    '<div class="rcm-remark"><b>' + T('res.remark', 'Remark') + ':</b> ' +
+
+    '<div class="rcm-two">' +
+      '<table class="rcm-att"><tr><th colspan="2">' +
+        T('res.attendance', 'Attendance') + '</th></tr>' +
+        '<tr><td>' + T('res.held', 'Days held') + '</td><td>' + (att.held || r.daysHeld || 0) + '</td></tr>' +
+        '<tr><td>' + T('res.present', 'Days present') + '</td><td>' + att.present + '</td></tr>' +
+        '<tr><td>' + T('res.pct', 'Percentage') + '</td><td><b>' + att.percent + '%</b></td></tr>' +
+      '</table>' +
+      '<table class="rcm-conduct"><tr><th colspan="2">' +
+        T('res.conduct', 'Conduct &amp; activities') + '</th></tr>' +
+        conduct.map(function (c) {
+          return '<tr><td>' + c + '</td><td class="rcm-box"></td></tr>';
+        }).join('') +
+      '</table>' +
+    '</div>' +
+
+    '<div class="rcm-scale"><b>' + T('res.scale', 'Grading scale') + ':</b> ' + scale +
+      (anyLow ? '<span class="rcm-star">* ' +
+        T('res.below', 'below pass marks') + ' (' + (r.passMark || 33) + '%)</span>' : '') + '</div>' +
+
+    '<div class="rcm-remark"><b>' + T('res.remark', "Teacher's remark") + ':</b> ' +
       esc(st.remark || '') + '</div>' +
+
+    '<div class="rcm-promote">' +
+      '<span>' + T('res.promoted', 'Promoted to class') + '</span>' +
+      '<span class="rcm-dots"></span>' +
+      '<span>' + T('res.issued', 'Date of issue') + '</span>' +
+      '<span class="rcm-dots short"></span>' +
+    '</div>' +
+
     '<div class="rcm-sign"><span>' + T('res.classteacher', 'Class Teacher') + '</span>' +
       '<span>' + T('res.parentsign2', 'Parent') + '</span>' +
       '<span>' + T('res.principal', 'Principal') + '</span></div>' +
