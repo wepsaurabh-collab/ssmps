@@ -570,13 +570,10 @@ code{background:#f1ece4;border-radius:8px;padding:3px 8px;font-size:12.5px;word-
   border:1.2px solid #000;padding:1mm 4mm}
 /* particulars sit beside the photo box, the way a school form is laid out */
 .rcv-body{display:flex;align-items:flex-start;gap:4mm;width:100%;margin-top:4mm;text-align:left}
-.rcv-photo{flex:0 0 26mm;height:33mm;border:1.2px solid #000;display:flex;
-  align-items:center;justify-content:center;padding:2mm;box-sizing:border-box}
-.rcv-photo span{text-align:center;font-size:7.5pt;font-weight:700;line-height:1.3;color:#555}
 .rcv-fields{flex:1;min-width:0}
-.rcv-line{display:flex;align-items:flex-end;gap:2.5mm;margin-bottom:2.6mm}
-.rcv-lbl{font-size:9.5pt;font-weight:700;min-width:25mm;flex:0 0 auto}
-.rcv-val{flex:1;min-width:0;font-size:9.5pt;border-bottom:1.2px dotted #000;
+.rcv-line{display:flex;align-items:flex-end;gap:2.5mm;margin-bottom:2.7mm}
+.rcv-lbl{font-size:10pt;font-weight:700;min-width:33mm;flex:0 0 auto}
+.rcv-val{flex:1;min-width:0;font-size:10pt;border-bottom:1.2px dotted #000;
   min-height:5mm;padding:0 1mm .8mm;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .rcv-sign{width:100%;text-align:left;font-size:9pt;font-weight:700;margin-top:3.5mm;
   display:flex;align-items:flex-end;gap:3mm}
@@ -2713,7 +2710,6 @@ var HI = {
   'res.principal': 'प्रधानाचार्य',
   'res.cardtitle': 'प्रगति रिपोर्ट कार्ड',
   'res.session': 'सत्र',
-  'res.photo': 'फोटो लगाएँ',
   'res.mother': 'माता',
   'res.admno': 'प्रवेश क्रमांक',
   'res.max': 'पूर्णांक',
@@ -3119,17 +3115,91 @@ function rawApi(fn) {
   });
 }
 function api(fn) {
-  var args = [ST.token].concat([].slice.call(arguments, 1));
-  progStart(API_LABEL[fn] || T('msg.wait', 'Working…'));
+  var args = [].slice.call(arguments, 1);
+  return callApi_(fn, args, true);
+}
+/* The same call without the progress bar, for work started in the background
+   that the person never asked for and must not be made to watch. */
+function apiQuiet(fn) {
+  var args = [].slice.call(arguments, 1);
+  return callApi_(fn, args, false);
+}
+function callApi_(fn, rest, loud) {
+  var args = [ST.token].concat(rest);
+  if (loud) progStart(API_LABEL[fn] || T('msg.wait', 'Working…'));
   return new Promise(function (ok, no) {
-    google.script.run.withSuccessHandler(function (r) { progDone(); ok(r); })
-      .withFailureHandler(function (err) {
-      progDone();
+    google.script.run.withSuccessHandler(function (r) {
+      if (loud) progDone();
+      /* Anything that is not on the read-only list may have changed the
+         books, so everything held in memory is dropped. Forgetting to list
+         a read-only call only costs a repeat fetch; forgetting to drop the
+         cache after a write would show the office a stale balance, so the
+         default has to be the safe one. */
+      if (!READ_ONLY[fn]) cacheClear();
+      ok(r);
+    }).withFailureHandler(function (err) {
+      if (loud) progDone();
       var msg = (err && err.message) || String(err);
       if (/AUTH_(EXPIRED|INVALID|REQUIRED)/.test(msg)) forceLogout(T('msg.sessionover', 'Session expired — please sign in again.'));
       no(new Error(TE(msg.replace(/^Error:\s*/, '')) || msg));
     })[fn].apply(null, args);
   });
+}
+
+/* ================================================== holding on to answers
+ *
+ * Every tap on a name used to be its own trip to Google: six sheet reads and
+ * a second or two of waiting, again for the next name, and again if the
+ * office came back to the first. Two things changed.
+ *
+ * One, a class is fetched in a single call. apiBulkDues costs the school the
+ * same six reads for forty families as apiStudentDues costs for one, so when
+ * a class list appears the whole class is quietly fetched behind it and every
+ * name after that opens with nothing in flight at all.
+ *
+ * Two, whatever has been fetched is kept until something is written. Any call
+ * that is not plainly a read throws the lot away.
+ */
+var READ_ONLY = {};
+('apiBoot apiPing apiLists apiDashboard apiStudentList apiStudentDues apiBulkDues ' +
+ 'apiDefaulters apiReport apiRecentReceipts apiFindReceipt apiStudentForUpdate ' +
+ 'apiStudentForCorrection apiTeacherList apiTeacherDetails apiExpenseList apiAuditLog ' +
+ 'apiAttendanceHome apiAttendanceSheet apiAttendanceRegister apiAttendanceReport ' +
+ 'apiMarkSheet apiMarksSetup apiMarksProgress apiClassResults apiClassRequests ' +
+ 'apiPendingCount apiICardDetails apiMyClassStudents apiFeeStructure apiGetSettings ' +
+ 'apiCredentials apiHealthCheck apiBackupStatus apiSelfTest')
+  .split(' ').forEach(function (n) { READ_ONLY[n] = true; });
+
+var CACHE = { dues: {}, student: {} };
+function cacheClear() { CACHE = { dues: {}, student: {} }; }
+
+/**
+ * One student's dues, from memory when we already have them.
+ * Everything that shows a fee account goes through here.
+ */
+function duesFor(id) {
+  if (CACHE.dues[id]) return Promise.resolve(CACHE.dues[id]);
+  return api('apiStudentDues', id).then(function (d) {
+    if (d && d.id) CACHE.dues[d.id] = d;
+    return d;
+  });
+}
+
+/**
+ * Fetch a whole class in the background so the next tap costs nothing.
+ * It is an optimisation and nothing depends on it: if the call is refused —
+ * a role without the scope, a dropped connection — the per-student call is
+ * still there and the person never learns this was tried.
+ */
+function prefetchDues(list) {
+  var ids = [];
+  for (var i = 0; i < list.length && ids.length < 60; i++) {
+    if (list[i].id && !CACHE.dues[list[i].id]) ids.push(list[i].id);
+  }
+  if (!ids.length) return;
+  apiQuiet('apiBulkDues', ids).then(function (rows) {
+    (rows || []).forEach(function (st) { if (st && st.id) CACHE.dues[st.id] = st; });
+  }).catch(function () {});
 }
 function fail(e) { Swal.fire({ icon: 'error', title: T('msg.error', 'Error'), text: (e && e.message) || String(e) }); }
 
@@ -3509,6 +3579,9 @@ function resetUiState() {
   ST.attHome = null; ST.student = null; ST.foundReceipt = null; ST.pick = {};
   ST.waRun = null; ST.register = null;
   if (typeof REP_CACHE !== 'undefined') REP_CACHE = {};
+  /* a different person may be about to sign in: nobody inherits the
+     last one's figures, the same reason REP_CACHE is cleared here */
+  cacheClear();
   Object.keys(ST.charts || {}).forEach(function (k) {
     try { ST.charts[k].destroy(); } catch (e) {}
   });
@@ -3751,6 +3824,8 @@ function loadPickAnySection(key) {
 }
 
 function renderPickList(cfg, list, key) {
+  /* fetch the whole class behind the list, so tapping a name is instant */
+  if (key === 'fee' || key === 'dues') prefetchDues(list);
   $(cfg.list).innerHTML = list.map(function (s) {
     var noRoll = !s.roll || isNaN(parseInt(s.roll, 10));
     var box = cfg.mode === 'multi'
@@ -4014,11 +4089,21 @@ function saveAdmission() {
 }
 
 /* ========================================================== students */
+var STU_SHOW = 0;
 function openStudent(id) {
-  busy(T('c.loading', 'Loading…'));
-  api('apiStudentForUpdate', id).then(function (s) {
-    Swal.close();
+  var held = CACHE.student[id];
+  var mine = ++STU_SHOW;          /* a slow reply for a name already left behind is dropped */
+  if (!held) busy(T('c.loading', 'Loading…'));
+  (held ? Promise.resolve(held) : api('apiStudentForUpdate', id)).then(function (s) {
+    if (mine !== STU_SHOW) return;
+    if (!held) Swal.close();
     if (s.error) return Swal.fire(T('msg.error', 'Error'), TE(s.error) || s.error, 'error');
+    /* These records carry a photo each, so only the last few are kept. */
+    if (!held && s.id) {
+      var ids = Object.keys(CACHE.student);
+      if (ids.length >= 25) delete CACHE.student[ids[0]];
+      CACHE.student[s.id] = s;
+    }
     ST.student = s;
     $('stuPanel').hidden = false;
     $('sName').textContent = s.name;
@@ -4213,9 +4298,12 @@ function uploadPhotoFor(id, name) {
 <script>
 /* ====================================================== fee collection */
 function openFeeStudent(id) {
-  busy(T('fee.loading', 'Opening the account…'));
-  api('apiStudentDues', id).then(function (d) {
-    Swal.close();
+  /* from memory when the class was prefetched, which is the usual case —
+     no spinner at all then, because there is nothing to wait for */
+  var held = !!CACHE.dues[id];
+  if (!held) busy(T('fee.loading', 'Opening the account…'));
+  duesFor(id).then(function (d) {
+    if (!held) Swal.close();
     if (d.error) return Swal.fire(T('msg.error', 'Error'), TE(d.error) || d.error, 'error');
     ST.dues = d;
     ST.waiveMap = {};
@@ -4519,11 +4607,17 @@ function loadDefaulters() {
  * The month-by-month dues for one student, shown under the list the moment
  * the name is tapped — no slip, no print dialog, no waiting.
  */
+var DUES_SHOW = 0;
 function showDuesFor(id) {
   var box = $('duesDetail');
   box.hidden = false;
-  box.innerHTML = '<div class="empty">' + T('c.loading', 'Loading…') + '</div>';
-  api('apiStudentDues', id).then(function (st) {
+  /* Tapping a second name while the first is still in flight used to leave
+     whichever answer landed last on screen. Each tap takes a number, and a
+     reply that is not the current one is dropped. */
+  var mine = ++DUES_SHOW;
+  if (!CACHE.dues[id]) box.innerHTML = '<div class="empty">' + T('c.loading', 'Loading…') + '</div>';
+  duesFor(id).then(function (st) {
+    if (mine !== DUES_SHOW) return;
     var rows = function (list, title) {
       if (!list.length) return '';
       return '<div style="margin-top:10px"><b style="font-size:12.5px">' + title + '</b>' +
@@ -7393,7 +7487,6 @@ function resultCover_(r, st, s) {
         (r.exam ? '  ·  ' + esc(r.exam) : '') + '</div>' +
 
       '<div class="rcv-body">' +
-        '<div class="rcv-photo"><span>' + esc(T('res.photo', 'Affix Photo')) + '</span></div>' +
         '<div class="rcv-fields">' +
           field(T('c.name', 'Name'), st.name) +
           field(T('res.father', "Father's Name"), st.father) +
